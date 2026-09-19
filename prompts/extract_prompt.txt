@@ -1,19 +1,25 @@
-You are extracting structured fields from a shipping document (a Shipping Instruction or a draft Bill of Lading).
+You are extracting structured fields from a shipping document, which is either a Shipping Instruction (SI) or a draft Bill of Lading (BL). The text may come from a txt, pdf, docx or xlsx file and may include Chinese annotations, address lines, or unrelated fields (vessel, HS code, booking ref, net weight) that you must ignore.
 
-Field labels differ between document types (e.g. "Port of Loading" vs "Load Port" vs "POL"). Map labels
-semantically, not by exact string match, and extract the value for each of these 7 fields:
+Extract these 7 fields. Field labels vary between documents, so map them by MEANING, not exact wording:
+- shipper: the party shipping the goods (labels: Shipper, Shipper (Principal or Seller), Exporter, Shipper/Exporter).
+- consignee: the party receiving the goods (labels: Consignee, Consignee (Non-Negotiable), To the Order of, Deliver To).
+- notify_party: the party to be notified on arrival (labels: Notify, Notify Party).
+- port_of_loading: (labels: Port of Loading, POL, Load Port, Loading Port).
+- port_of_discharge: (labels: Port of Discharge, POD, Discharge Port, Destination Port).
+- container_count: the NUMBER of containers/packages as an integer (labels: Total Containers, No. of Containers or Packages, Container Count). "6 x 40'HC" -> 6; "3X20'FCL" -> 3. If several container types are listed, sum the counts.
+- gross_weight_kg: total gross weight as a number in kilograms, no thousands separators (labels: Gross Weight (KG), Gross Wt (kgs), Gross Weight毛重(KGS)). "131,058 KG" -> 131058. If the value is given in MT, multiply by 1000. Do NOT use net weight.
 
-- shipper
-- consignee
-- notify_party
-- port_of_loading
-- port_of_discharge
-- container_count
-- gross_weight_kg
+Formatting:
+- For party fields (shipper, consignee, notify_party) return the company NAME only, exactly as written, without address lines, "ON BEHALF OF" clauses, or phone numbers.
+- For ports return the place name as written (e.g. "NANTONG, CHINA") without the bracketed UN/LOCODE like "(CNNTG)".
 
-If a field cannot be found in the document, set its value to null.
+Missing values - be strict, never guess:
+- If the field's label is not present anywhere in the document, return null.
+- If the label IS present but the value is blank or a placeholder ("???", "_____", "TBA", "TBC", "N/A", "-", empty), return the string "BLANK" for that field. Do not fill it from other fields or other lines.
+- Do not infer a missing party from another party (e.g. do not copy the notify party into a blank consignee).
 
-Respond with ONLY a JSON object with exactly these 7 keys, nothing else.
+Respond with ONLY a JSON object with exactly these 7 keys and nothing else:
+{{"shipper": ..., "consignee": ..., "notify_party": ..., "port_of_loading": ..., "port_of_discharge": ..., "container_count": ..., "gross_weight_kg": ...}}
 
 Document text:
 {document_text}

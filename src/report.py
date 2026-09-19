@@ -1,27 +1,15 @@
-"""Build a single report entry matching sample_submission.json's shape. No AI here."""
-from src.comparator import NO_MISMATCH
+"""Build the per-email submission entry."""
+
+STATUSES = ["OK", "MISMATCH", "NEEDS_REVIEW"]
+REVIEW_REASONS = ["missing_attachment", "wrong_doc_type", "unreadable", "missing_value"]
 
 
-def build_report_entry(category: str, mismatches=None, escalation: dict = None) -> dict:
-    """Assemble the output dict for one email.
-
-    For non-comparison categories, mismatch fields are left null and
-    escalation defaults to not-flagged.
-    """
-    escalation = escalation or {"flagged": False, "reason": None}
-
-    if category != "document-comparison":
-        return {
-            "category": category,
-            "mismatch_found": None,
-            "mismatches": None,
-            "escalation": escalation,
-        }
-
-    mismatch_found = mismatches is not None and mismatches != NO_MISMATCH
+def build_entry(category: str, status: str = "OK", review_reason: str | None = None,
+                defect_fields: list[str] | None = None) -> dict:
     return {
         "category": category,
-        "mismatch_found": mismatch_found,
-        "mismatches": mismatches if mismatches is not None else NO_MISMATCH,
-        "escalation": escalation,
+        "status": status,
+        "review_reason": review_reason,
+        "defect_fields": defect_fields or [],
+        "has_defect": status == "MISMATCH",
     }

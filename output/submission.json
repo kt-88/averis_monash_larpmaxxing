@@ -1,47 +1,147 @@
 {
-  "email_0001": {
-    "category": "general",
-    "mismatch_found": null,
-    "mismatches": null,
-    "escalation": {
-      "flagged": false,
-      "reason": null
-    }
+  "email_001": {
+    "category": "BL_COMPARISON",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
   },
-  "email_0002": {
-    "category": "general",
-    "mismatch_found": null,
-    "mismatches": null,
-    "escalation": {
-      "flagged": false,
-      "reason": null
-    }
+  "email_002": {
+    "category": "INVOICE_QUERY",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
   },
-  "email_0003": {
-    "category": "general",
-    "mismatch_found": null,
-    "mismatches": null,
-    "escalation": {
-      "flagged": false,
-      "reason": null
-    }
+  "email_003": {
+    "category": "BL_COMPARISON",
+    "status": "NEEDS_REVIEW",
+    "review_reason": "missing_attachment",
+    "defect_fields": [],
+    "has_defect": false
   },
-  "email_0004": {
-    "category": "general",
-    "mismatch_found": null,
-    "mismatches": null,
-    "escalation": {
-      "flagged": false,
-      "reason": null
-    }
+  "email_004": {
+    "category": "BL_COMPARISON",
+    "status": "MISMATCH",
+    "review_reason": null,
+    "defect_fields": [
+      "consignee",
+      "notify_party"
+    ],
+    "has_defect": true
   },
-  "email_0005": {
-    "category": "general",
-    "mismatch_found": null,
-    "mismatches": null,
-    "escalation": {
-      "flagged": false,
-      "reason": null
-    }
+  "email_005": {
+    "category": "BL_COMPARISON",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_006": {
+    "category": "BL_COMPARISON",
+    "status": "NEEDS_REVIEW",
+    "review_reason": "missing_attachment",
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_007": {
+    "category": "SI_REQUEST",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_008": {
+    "category": "SI_REQUEST",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_009": {
+    "category": "BL_COMPARISON",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_010": {
+    "category": "INVOICE_QUERY",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_011": {
+    "category": "GENERAL",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_012": {
+    "category": "GENERAL",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_013": {
+    "category": "BL_COMPARISON",
+    "status": "MISMATCH",
+    "review_reason": null,
+    "defect_fields": [
+      "port_of_discharge"
+    ],
+    "has_defect": true
+  },
+  "email_014": {
+    "category": "SI_REQUEST",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_015": {
+    "category": "SPAM",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_016": {
+    "category": "BL_COMPARISON",
+    "status": "NEEDS_REVIEW",
+    "review_reason": "missing_attachment",
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_017": {
+    "category": "INVOICE_QUERY",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_018": {
+    "category": "BL_COMPARISON",
+    "status": "NEEDS_REVIEW",
+    "review_reason": "missing_attachment",
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_019": {
+    "category": "SI_REQUEST",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_020": {
+    "category": "SI_REQUEST",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
   }
 }

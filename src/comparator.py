@@ -1,26 +1,53 @@
-"""Deterministic comparison of SI fields against BL fields. No AI here."""
-from src.extractor import FIELD_KEYS
+"""Stage 3: deterministic comparison of SI vs BL fields (no LLM)."""
+import re
 
-NO_MISMATCH = "No mismatch detected"
+from src.extractor import FIELDS
+
+PORT_FIELDS = {"port_of_loading", "port_of_discharge"}
+NUMERIC_FIELDS = {"container_count", "gross_weight_kg"}
 
 
-def compare_fields(si_fields: dict, bl_fields: dict):
-    """Compare the 7 extracted fields. Returns NO_MISMATCH or a list of
-    {"field", "si_value", "bl_value"} dicts for each differing field.
+def _clean(s) -> str:
+    s = re.sub(r"\([^)]*\)", " ", str(s).upper())
+    s = re.sub(r"[^A-Z0-9 ,]", " ", s)
+    return re.sub(r"\s+", " ", s).strip(" ,")
 
-    STUB: uses exact equality; no normalization/fuzzy matching yet.
-    """
-    mismatches = []
-    for key in FIELD_KEYS:
-        si_value = si_fields.get(key)
-        bl_value = bl_fields.get(key)
-        if si_value != bl_value:
-            mismatches.append({
-                "field": key,
-                "si_value": si_value,
-                "bl_value": bl_value,
-            })
 
-    if not mismatches:
-        return NO_MISMATCH
-    return mismatches
+def normalize_number(v):
+    try:
+        return float(str(v).replace(",", "").strip())
+    except ValueError:
+        return None
+
+
+def names_match(a, b) -> bool:
+    return _clean(a) == _clean(b)
+
+
+def ports_match(a, b) -> bool:
+    ca, cb = _clean(a), _clean(b)
+    if ca == cb:
+        return True
+    # "NANTONG" vs "NANTONG, CHINA": same city, one side omits the country
+    city_a, *rest_a = ca.split(",")
+    city_b, *rest_b = cb.split(",")
+    return city_a.strip() == city_b.strip() and (not rest_a or not rest_b)
+
+
+def numbers_match(a, b) -> bool:
+    na, nb = normalize_number(a), normalize_number(b)
+    return na is not None and na == nb
+
+
+def field_matches(field: str, a, b) -> bool:
+    if field in NUMERIC_FIELDS:
+        return numbers_match(a, b)
+    if field in PORT_FIELDS:
+        return ports_match(a, b)
+    return names_match(a, b)
+
+
+def compare_fields(si: dict, bl: dict) -> tuple[str, list[str]]:
+    """Return (status, defect_fields). Callers must have ruled out missing values first."""
+    diffs = [f for f in FIELDS if not field_matches(f, si.get(f), bl.get(f))]
+    return ("MISMATCH", diffs) if diffs else ("OK", [])

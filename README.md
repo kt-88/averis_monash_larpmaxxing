@@ -1,67 +1,43 @@
-# Shipping Doc Checker
+# Shipping document verification pipeline
 
-Hackathon prototype that triages a shipping-ops inbox and, for document-comparison
-requests, checks a Shipping Instruction (SI) against a draft Bill of Lading (BL) on
-7 fields: shipper, consignee, notify party, port of loading, port of discharge,
-container count, and gross weight (kg).
-
-This is scaffolding: the architecture is wired end-to-end, but classification,
-extraction, and comparison currently use placeholder prompts/logic and need
-refinement.
+Classifies 520 emails, then for `BL_COMPARISON` emails extracts 7 fields from the SI and BL, compares them deterministically, and escalates anything it cannot compare confidently.
 
 ## Setup
 
-1. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+```
+pip install -r requirements.txt
+copy .env.example .env      # then set GEMINI_API_KEY
+```
 
-2. Copy `.env.example` to `.env` and fill in your keys:
-   ```
-   cp .env.example .env
-   ```
-   - `GEMINI_API_KEY` - required for classification and extraction (free tier available at [aistudio.google.com](https://aistudio.google.com/apikey))
-   - `AWS_*` - only needed if you wire up `cloud/s3_client.py`
+Data is read from `data/` (`inbox/*.json` + `attachments/`) through the provided `loader.py`. `ground_truth.json` is never read.
 
-3. Sample inbox data is already in `data/` (`emails.json` + `attachments/`),
-   loaded by `loader.py` at the project root.
+## Run
 
-4. Run the pipeline:
-   ```
-   python main.py
-   ```
-   This writes `output/submission.json` and submits it via `inbox.submit(...)`.
+```
+python main.py --limit 20 --out output/submission.json     # dev run
+python main.py --workers 8                                  # full run
+streamlit run app/viewer.py                                 # UI (click "Load output/submission.json")
+pytest tests
+```
 
-5. (Optional) View results in a browser:
-   ```
-   streamlit run app/viewer.py
-   ```
+Every LLM response is cached under `.cache/llm/` (key = hash of model + prompt), so re-runs are free. `[llm] API calls made: N` prints on each real call.
+Models (env-configurable): `CLASSIFY_MODEL` (cheap, `gemini-3.5-flash-lite`), `EXTRACT_MODEL` (`gemini-3.5-flash-lite`).
 
-6. Run tests:
-   ```
-   pytest
-   ```
-   The pipeline test is skipped automatically until `loader.py` is present.
+## Design
 
-## Project layout
+| Stage | File | Notes |
+|---|---|---|
+| Read | `src/readers.py` | txt/pdf/docx/xlsx -> text; raises `UnreadableAttachment` for 0-byte, truncated, scanned (no text layer) or garbled files |
+| Classify | `src/classifier.py` | LLM; body is split from the quoted thread so the newest request decides |
+| Extract | `src/extractor.py` | LLM; semantic label mapping is in `prompts/extract_prompt.txt`. Absent label -> `null`; present-but-blank (`???`, `____`, `TBA`, `N/A`) -> `"BLANK"` |
+| Compare | `src/comparator.py` | pure Python: case/punctuation-insensitive names, port codes in brackets ignored, numeric equality |
+| Escalate | `src/escalation.py` | precedence: missing_attachment > unreadable > wrong_doc_type > missing_value |
 
-- `src/classifier.py` - LLM email classification (document-comparison / new-SI-request / invoice-query / general / spam)
-- `src/extractor.py` - LLM field extraction from SI/BL attachment text
-- `src/comparator.py` - deterministic 7-field comparison, no AI
-- `src/escalation.py` - deterministic missing-field / unreadable-attachment flagging, no AI
-- `src/report.py` - assembles one report entry per email
-- `src/pipeline.py` - orchestrates the above over the whole inbox
-- `prompts/` - raw prompt text used by classifier.py / extractor.py
-- `cloud/s3_client.py` - upload/download stubs, not yet wired into the pipeline
-- `app/viewer.py` - minimal Streamlit table over `output/submission.json`
-- `loader.py` - local inbox loader reading `data/emails.json` + `data/attachments/`
+Wrong-document detection uses the document title deterministically, and skips extraction (saves calls).
 
-## Known gaps (by design, for now)
+## Assumptions to review
 
-- Prompts in `prompts/` are rough first drafts.
-- `src/pipeline.py` guesses which attachment is the SI vs. the BL by filename
-  keywords - adjust `_find_attachment` once the real email/attachment schema
-  from `loader.py` is known.
-- No retry/backoff on LLM calls.
-- `comparator.py` does exact-match comparison only (no normalization, e.g.
-  "Ltd." vs "Limited").
+- `has_defect` is `true` only for `MISMATCH`; `NEEDS_REVIEW` entries get `false` (a blank/unreadable value is not a defect). One line to change in `src/report.py`.
+- A `BL_COMPARISON` email with no attachments is `NEEDS_REVIEW / missing_attachment`.
+- Party fields are compared on company name only, not addresses.
+- The viewer's detail panel re-runs extraction for the selected email; results come from the disk cache when the pipeline has already run.

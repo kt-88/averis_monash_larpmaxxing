@@ -1,13 +1,24 @@
-You are triaging emails in a shipping operations inbox.
+You are triaging emails sent to a shipping documentation team. Classify the email into EXACTLY ONE category based on what the sender is actually asking for in the NEWEST message.
 
-Read the email below and classify it into exactly one of these categories:
-- document-comparison   (asks to compare/check a Shipping Instruction against a draft Bill of Lading)
-- new-SI-request        (submitting or requesting a new Shipping Instruction)
-- invoice-query         (question about billing, charges, or an invoice)
-- general               (anything else that is a legitimate operational message)
-- spam                  (irrelevant, promotional, or junk)
+Categories:
+- BL_COMPARISON: the sender asks the team to check / compare / verify a draft Bill of Lading (BL) against the Shipping Instruction (SI), or to confirm BL/SI details. Applies even if the attachments seem to be missing or were mentioned but not attached.
+- SI_REQUEST: the sender is submitting a Shipping Instruction (often with shipper/consignee/ports/weights written in the body) and wants a draft BL prepared, or is asking for / chasing SI details. No SI-vs-BL comparison is requested.
+- INVOICE_QUERY: a question about an invoice, freight/THC/local charges, detention/demurrage, billing, or a missing goods receipt (GR) affecting billing.
+- GENERAL: legitimate business email that fits none of the above (schedule questions, acknowledgements, cutoff or vessel updates, internal chatter).
+- SPAM: unsolicited promotion, phishing, prizes, or irrelevant mass mailing.
 
-Respond with ONLY the category string, nothing else.
+Rules:
+- Ignore boilerplate: signatures, contact blocks, disclaimers, "EXTERNAL SENDER" banners, and quoted/forwarded earlier messages. Lines like "Please follow the previous instruction" in a quoted thread are NOT the request.
+- The subject line is a hint only; the body request decides. Subjects may be stale from an older thread (e.g. "MISSING GR" while the body asks about something else).
+- If the newest message is short (e.g. "Please see below" / "FYI"), use the quoted thread to work out what is being asked.
+- Choose the single best category. Do not invent categories.
+
+Respond with ONLY a JSON object: {{"category": "<one of the five>"}}
 
 Subject: {subject}
-Body: {body}
+
+Newest message:
+{body}
+
+Earlier quoted thread (context only, may be empty):
+{thread}
