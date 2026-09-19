@@ -8,8 +8,8 @@ from src.cache import BudgetExceeded
 from src.classifier import classify_email
 from src.comparator import compare_fields
 from src.escalation import check_attachments, check_doc_types, check_missing_values
-from src.extractor import extract_fields
-from src.readers import UnreadableAttachment, read_attachment
+from src.extractor import extract_fields_detailed, flat_values
+from src.readers import read_attachment
 from src.report import build_entry
 
 
@@ -21,7 +21,9 @@ def load_documents(inbox, paths: list[str]) -> tuple[list[str], bool, bool]:
             texts.append(read_attachment(p, inbox.read_bytes(p)))
         except FileNotFoundError:
             return texts, False, True
-        except UnreadableAttachment:
+        except BudgetExceeded:
+            raise
+        except Exception:  # UnreadableAttachment or any reader bug: escalate this email, don't crash the run
             return texts, True, False
     return texts, False, False
 
@@ -29,7 +31,8 @@ def load_documents(inbox, paths: list[str]) -> tuple[list[str], bool, bool]:
 def analyze_comparison(inbox, email: dict, intent: str | None = None, title: str | None = None) -> dict:
     """Run stages 2-4 for one BL_COMPARISON email; returns entry plus readable source data."""
     paths = email.get("attachments", [])
-    detail = {"si_fields": None, "bl_fields": None, "si_text": None, "bl_text": None}
+    detail = {"si_fields": None, "bl_fields": None, "si_text": None, "bl_text": None,
+              "si_detail": None, "bl_detail": None}
 
     def review(reason):
         return {**detail, "entry": build_entry("BL_COMPARISON", "NEEDS_REVIEW", reason, intent=intent, title=title)}
@@ -45,7 +48,9 @@ def analyze_comparison(inbox, email: dict, intent: str | None = None, title: str
         return review("unreadable")
     if (reason := check_doc_types(*texts)):
         return review(reason)
-    detail["si_fields"], detail["bl_fields"] = extract_fields(texts[0]), extract_fields(texts[1])
+    detail["si_detail"] = extract_fields_detailed(texts[0])
+    detail["bl_detail"] = extract_fields_detailed(texts[1])
+    detail["si_fields"], detail["bl_fields"] = flat_values(detail["si_detail"]), flat_values(detail["bl_detail"])
     if (reason := check_missing_values(detail["si_fields"], detail["bl_fields"])):
         return review(reason)
     status, defects = compare_fields(detail["si_fields"], detail["bl_fields"])
@@ -66,12 +71,15 @@ def run_pipeline(inbox, limit: int | None = None, workers: int = 4) -> dict:
             return process_email(inbox, e)
         except BudgetExceeded:
             return None
+        except Exception as err:  # one bad email must not lose the other 519
+            print(f"[pipeline] {e.get('email_id')} failed and was skipped: {err!r}", flush=True)
+            return None
 
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
         results = list(pool.map(safe, emails))
     skipped = sum(r is None for r in results)
     if skipped:
-        print(f"[pipeline] API call budget reached: {skipped} emails skipped (re-run to continue from cache)")
+        print(f"[pipeline] {skipped} emails skipped (API budget reached or error): re-run to continue from cache")
     pairs = [(e, r) for e, r in zip(emails, results) if r is not None]
     emails, results = [e for e, _ in pairs], [r for _, r in pairs]
     print(f"[pipeline] done: {len(emails)} emails, {cache.stats['api_calls']} API calls, "

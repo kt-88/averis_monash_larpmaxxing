@@ -26,16 +26,24 @@ def cache_key(model: str, prompt: str) -> str:
 
 def cache_get(key: str):
     path = CACHE_DIR / f"{key}.json"
-    if path.exists():
-        with _lock:
-            stats["cache_hits"] += 1
-        return json.loads(path.read_text(encoding="utf-8"))["response"]
-    return None
+    try:
+        response = json.loads(path.read_text(encoding="utf-8"))["response"]
+    except (OSError, ValueError, KeyError):  # missing or half-written file -> treat as a cache miss
+        return None
+    if not isinstance(response, str) or not response.strip():
+        return None
+    with _lock:
+        stats["cache_hits"] += 1
+    return response
 
 
 def cache_put(key: str, response: str) -> None:
+    if not response or not response.strip():
+        return  # never cache an empty answer
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    (CACHE_DIR / f"{key}.json").write_text(json.dumps({"response": response}), encoding="utf-8")
+    tmp = CACHE_DIR / f"{key}.{threading.get_ident()}.tmp"
+    tmp.write_text(json.dumps({"response": response}), encoding="utf-8")
+    os.replace(tmp, CACHE_DIR / f"{key}.json")  # atomic swap: no reader ever sees a half-written file
 
 
 def cached_llm_call(model: str, prompt: str, call_fn) -> str:
