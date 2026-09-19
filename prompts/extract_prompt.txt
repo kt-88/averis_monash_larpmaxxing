@@ -18,8 +18,8 @@ Missing values - be strict, never guess:
 - If the label IS present but the value is blank or a placeholder ("???", "_____", "TBA", "TBC", "N/A", "-", empty), return the string "BLANK" for that field. Do not fill it from other fields or other lines.
 - Do not infer a missing party from another party (e.g. do not copy the notify party into a blank consignee).
 
-Respond with ONLY a JSON object with exactly these 7 keys and nothing else:
-{{"shipper": ..., "consignee": ..., "notify_party": ..., "port_of_loading": ..., "port_of_discharge": ..., "container_count": ..., "gross_weight_kg": ...}}
+Respond with ONLY a JSON object with exactly these 7 keys. Each key maps to an object with "value" (as described above) and "snippet" (the exact line or cell text from the document that you read the value from, copied character for character; null if the label is absent):
+{{"shipper": {{"value": ..., "snippet": ...}}, "consignee": {{"value": ..., "snippet": ...}}, "notify_party": {{"value": ..., "snippet": ...}}, "port_of_loading": {{"value": ..., "snippet": ...}}, "port_of_discharge": {{"value": ..., "snippet": ...}}, "container_count": {{"value": ..., "snippet": ...}}, "gross_weight_kg": {{"value": ..., "snippet": ...}}}}
 
 Document text:
 {document_text}

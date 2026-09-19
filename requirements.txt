@@ -1,7 +1,7 @@
 google-genai
 streamlit
 pandas
-pypdf
+pdfplumber
 python-docx
 openpyxl
 python-dotenv

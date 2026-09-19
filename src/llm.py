@@ -1,4 +1,5 @@
 """Thin Gemini wrapper: cached, retrying text generation."""
+import hashlib
 import os
 import threading
 import time
@@ -46,13 +47,14 @@ def _get_client():
         return _client
 
 
-def _generate(model: str, prompt: str, max_retries: int = 8) -> str:
+def _generate(model: str, contents, max_retries: int = 8, json_mode: bool = True) -> str:
     from google.genai import errors, types
-    config = types.GenerateContentConfig(temperature=0, response_mime_type="application/json")
+    config = types.GenerateContentConfig(
+        temperature=0, response_mime_type="application/json" if json_mode else "text/plain")
     for attempt in range(max_retries + 1):
         wait_for_rate_slot()
         try:
-            resp = _get_client().models.generate_content(model=model, contents=prompt, config=config)
+            resp = _get_client().models.generate_content(model=model, contents=contents, config=config)
             return resp.text or ""
         except (errors.ClientError, errors.ServerError) as e:
             if e.code in (429, 500, 503) and attempt < max_retries:
@@ -63,3 +65,12 @@ def _generate(model: str, prompt: str, max_retries: int = 8) -> str:
 
 def llm_json_text(model: str, prompt: str) -> str:
     return cached_llm_call(model, prompt, lambda: _generate(model, prompt))
+
+
+def llm_vision_text(prompt: str, png_pages: list[bytes]) -> str:
+    """Send page images to a vision model and return its plain-text transcription (cached)."""
+    from google.genai import types
+    model = os.environ.get("VISION_MODEL") or os.environ.get("EXTRACT_MODEL", "gemini-3.5-flash-lite")
+    parts = [types.Part.from_bytes(data=p, mime_type="image/png") for p in png_pages]
+    key = prompt + "".join(hashlib.sha256(p).hexdigest() for p in png_pages)   # images are part of the cache key
+    return cached_llm_call(model, key, lambda: _generate(model, [prompt, *parts], json_mode=False))
