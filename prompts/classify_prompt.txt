@@ -1,0 +1,13 @@
+You are triaging emails in a shipping operations inbox.
+
+Read the email below and classify it into exactly one of these categories:
+- document-comparison   (asks to compare/check a Shipping Instruction against a draft Bill of Lading)
+- new-SI-request        (submitting or requesting a new Shipping Instruction)
+- invoice-query         (question about billing, charges, or an invoice)
+- general               (anything else that is a legitimate operational message)
+- spam                  (irrelevant, promotional, or junk)
+
+Respond with ONLY the category string, nothing else.
+
+Subject: {subject}
+Body: {body}

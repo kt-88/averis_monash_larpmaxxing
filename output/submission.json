@@ -1,0 +1,47 @@
+{
+  "email_0001": {
+    "category": "general",
+    "mismatch_found": null,
+    "mismatches": null,
+    "escalation": {
+      "flagged": false,
+      "reason": null
+    }
+  },
+  "email_0002": {
+    "category": "general",
+    "mismatch_found": null,
+    "mismatches": null,
+    "escalation": {
+      "flagged": false,
+      "reason": null
+    }
+  },
+  "email_0003": {
+    "category": "general",
+    "mismatch_found": null,
+    "mismatches": null,
+    "escalation": {
+      "flagged": false,
+      "reason": null
+    }
+  },
+  "email_0004": {
+    "category": "general",
+    "mismatch_found": null,
+    "mismatches": null,
+    "escalation": {
+      "flagged": false,
+      "reason": null
+    }
+  },
+  "email_0005": {
+    "category": "general",
+    "mismatch_found": null,
+    "mismatches": null,
+    "escalation": {
+      "flagged": false,
+      "reason": null
+    }
+  }
+}

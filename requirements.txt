@@ -1,0 +1,5 @@
+google-genai
+boto3
+streamlit
+pytest
+python-dotenv

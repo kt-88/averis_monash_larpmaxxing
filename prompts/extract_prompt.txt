@@ -1,0 +1,19 @@
+You are extracting structured fields from a shipping document (a Shipping Instruction or a draft Bill of Lading).
+
+Field labels differ between document types (e.g. "Port of Loading" vs "Load Port" vs "POL"). Map labels
+semantically, not by exact string match, and extract the value for each of these 7 fields:
+
+- shipper
+- consignee
+- notify_party
+- port_of_loading
+- port_of_discharge
+- container_count
+- gross_weight_kg
+
+If a field cannot be found in the document, set its value to null.
+
+Respond with ONLY a JSON object with exactly these 7 keys, nothing else.
+
+Document text:
+{document_text}
