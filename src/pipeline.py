@@ -13,28 +13,32 @@ from src.readers import UnreadableAttachment, read_attachment
 from src.report import build_entry
 
 
-def load_documents(inbox, paths: list[str]) -> tuple[list[str], bool]:
-    """Read up to two attachments. Returns (texts read so far, any_unreadable)."""
+def load_documents(inbox, paths: list[str]) -> tuple[list[str], bool, bool]:
+    """Read up to two attachments. Returns (texts read so far, any_unreadable, any_file_missing)."""
     texts = []
     for p in paths[:2]:
         try:
             texts.append(read_attachment(p, inbox.read_bytes(p)))
+        except FileNotFoundError:
+            return texts, False, True
         except UnreadableAttachment:
-            return texts, True
-    return texts, False
+            return texts, True, False
+    return texts, False, False
 
 
-def analyze_comparison(inbox, email: dict) -> dict:
+def analyze_comparison(inbox, email: dict, intent: str | None = None, title: str | None = None) -> dict:
     """Run stages 2-4 for one BL_COMPARISON email; returns entry plus readable source data."""
     paths = email.get("attachments", [])
     detail = {"si_fields": None, "bl_fields": None, "si_text": None, "bl_text": None}
 
     def review(reason):
-        return {**detail, "entry": build_entry("BL_COMPARISON", "NEEDS_REVIEW", reason)}
+        return {**detail, "entry": build_entry("BL_COMPARISON", "NEEDS_REVIEW", reason, intent=intent, title=title)}
 
-    texts, unreadable = load_documents(inbox, paths)
+    texts, unreadable, file_missing = load_documents(inbox, paths)
     detail["si_text"] = texts[0] if texts else None
     detail["bl_text"] = texts[1] if len(texts) > 1 else None
+    if file_missing:
+        return review("missing_attachment")
     if (reason := check_attachments(paths)):
         return review(reason)
     if unreadable:
@@ -45,14 +49,14 @@ def analyze_comparison(inbox, email: dict) -> dict:
     if (reason := check_missing_values(detail["si_fields"], detail["bl_fields"])):
         return review(reason)
     status, defects = compare_fields(detail["si_fields"], detail["bl_fields"])
-    return {**detail, "entry": build_entry("BL_COMPARISON", status, None, defects)}
+    return {**detail, "entry": build_entry("BL_COMPARISON", status, None, defects, intent, title)}
 
 
 def process_email(inbox, email: dict) -> dict:
-    category = classify_email(email)
+    category, intent, title = classify_email(email)
     if category != "BL_COMPARISON":
-        return {"entry": build_entry(category)}
-    return analyze_comparison(inbox, email)
+        return {"entry": build_entry(category, intent=intent, title=title)}
+    return analyze_comparison(inbox, email, intent, title)
 
 
 def run_pipeline(inbox, limit: int | None = None, workers: int = 4) -> dict:

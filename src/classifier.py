@@ -6,7 +6,14 @@ from pathlib import Path
 
 from src.llm import llm_json_text
 
-CATEGORIES = ["BL_COMPARISON", "SI_REQUEST", "INVOICE_QUERY", "GENERAL", "SPAM"]
+INTENTS = {
+    "BL_COMPARISON": ["check_docs"],
+    "SI_REQUEST": ["si_submission"],
+    "INVOICE_QUERY": ["missing_gr", "charges_breakdown", "detention_demurrage", "cancel_invoice", "other_invoice"],
+    "GENERAL": ["chase_document", "automated_notice", "schedule_update", "other_general"],
+    "SPAM": ["spam"],
+}
+CATEGORIES = list(INTENTS)
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "classify_prompt.txt"
 THREAD_MARKER = re.compile(r"^\s*(_{5,}|-{5,}|From:\s|-+\s*Original Message)", re.M | re.I)
 MAX_THREAD_CHARS = 2500
@@ -27,18 +34,21 @@ def build_prompt(email: dict) -> str:
     )
 
 
-def parse_category(raw: str) -> str:
+def parse_classification(raw: str, fallback_title: str = "") -> tuple[str, str, str]:
+    """Return (category, intent, title); an intent that doesn't belong to the category falls back to its last one."""
     try:
-        value = json.loads(raw).get("category", "")
+        data = json.loads(raw)
+        category, intent, title = data.get("category", ""), data.get("intent", ""), data.get("title", "")
     except (json.JSONDecodeError, AttributeError):
-        value = raw
-    value = str(value).strip().upper()
-    for cat in CATEGORIES:
-        if cat in value:
-            return cat
-    return "GENERAL"
+        category, intent, title = raw, "", ""
+    category = str(category).strip().upper()
+    category = next((c for c in CATEGORIES if c in category), "GENERAL")
+    intent = str(intent).strip().lower()
+    if intent not in INTENTS[category]:
+        intent = INTENTS[category][-1]
+    return category, intent, str(title or "").strip() or fallback_title
 
 
-def classify_email(email: dict, model: str | None = None) -> str:
+def classify_email(email: dict, model: str | None = None) -> tuple[str, str, str]:
     model = model or os.environ.get("CLASSIFY_MODEL", "gemini-3.5-flash-lite")
-    return parse_category(llm_json_text(model, build_prompt(email)))
+    return parse_classification(llm_json_text(model, build_prompt(email)), email.get("subject", ""))

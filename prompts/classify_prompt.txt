@@ -1,19 +1,40 @@
-You are triaging emails sent to a shipping documentation team. Classify the email into EXACTLY ONE category based on what the sender is actually asking for in the NEWEST message.
+You triage emails for a shipping documentation team at a paper exporter. Emails come from colleagues and from outside. Decide what the sender wants the team to DO with the newest message, then pick one category and one intent.
 
-Categories:
-- BL_COMPARISON: the sender asks the team to check / compare / verify a draft Bill of Lading (BL) against the Shipping Instruction (SI), or to confirm BL/SI details. Applies even if the attachments seem to be missing or were mentioned but not attached.
-- SI_REQUEST: the sender is submitting a Shipping Instruction (often with shipper/consignee/ports/weights written in the body) and wants a draft BL prepared, or is asking for / chasing SI details. No SI-vs-BL comparison is requested.
-- INVOICE_QUERY: a question about an invoice, freight/THC/local charges, detention/demurrage, billing, or a missing goods receipt (GR) affecting billing.
-- GENERAL: legitimate business email that fits none of the above (schedule questions, acknowledgements, cutoff or vessel updates, internal chatter).
-- SPAM: unsolicited promotion, phishing, prizes, or irrelevant mass mailing.
+Categories and intents (pick the intent from the list under your category):
+
+1. BL_COMPARISON - the sender wants the team to check a draft Bill of Lading (BL) against the Shipping Instruction (SI).
+   - check_docs: "attached are the SI and draft BL, please check / confirm / compare / verify". Use this even if the attachments are missing or were dropped, as long as the sender says they are sending both documents, or asks the team to compare them.
+
+2. SI_REQUEST - the sender gives shipping instructions and wants a draft BL prepared.
+   - si_submission: the SI details (POL/POD, shipper, consignee, weights...) are written in the email body, or the sender asks for a BL to be drafted from them. Nothing is being compared.
+
+3. INVOICE_QUERY - anything about billing, invoices or charges.
+   - missing_gr: the goods receipt (GR) is missing and blocks billing.
+   - charges_breakdown: a question on THC / local / freight charges, or how a charge is billed.
+   - detention_demurrage: D&D / detention / demurrage charges to confirm.
+   - cancel_invoice: cancel an invoice / reverse the PGI.
+   - other_invoice: any other invoice or billing question.
+
+4. GENERAL - legitimate business email that needs no SI/BL check and is not about invoices.
+   - chase_document: the sender asks the team to SEND or provide a draft BL or SI (e.g. "please assist to send the draft BL for ... for checking"). Nothing is attached and nothing can be compared yet.
+   - automated_notice: automated or bot notification ("no action required", RPA bot, system alert).
+   - schedule_update: vessel schedule, cutoff, ETA/ETD, booking or routing information.
+   - other_general: acknowledgements, internal chatter, anything else legitimate.
+
+5. SPAM
+   - spam: unsolicited promotion, phishing, prizes, crypto/investment offers, fake parcel or account notices.
+
+Key distinction: BL_COMPARISON is when the sender GIVES the team both documents (or says they did) to be checked. GENERAL/chase_document is when the sender ASKS the team to send a document. Only the direction of the request matters, not whether files are attached.
 
 Rules:
-- Ignore boilerplate: signatures, contact blocks, disclaimers, "EXTERNAL SENDER" banners, and quoted/forwarded earlier messages. Lines like "Please follow the previous instruction" in a quoted thread are NOT the request.
-- The subject line is a hint only; the body request decides. Subjects may be stale from an older thread (e.g. "MISSING GR" while the body asks about something else).
-- If the newest message is short (e.g. "Please see below" / "FYI"), use the quoted thread to work out what is being asked.
-- Choose the single best category. Do not invent categories.
+- Read the newest message first. The subject is only a hint and is often stale from an older thread (e.g. "TO CONFIRM DOCS" or "MISSING GR" on an unrelated request). The body decides.
+- Ignore signatures, contact blocks, "WARNING: This email originated outside of our organisation" banners, disclaimers, and quoted or forwarded earlier messages.
+- If the newest message is only "Please see below" / "FYI", use the quoted thread to work out the request.
+- Choose exactly one category and an intent that belongs to it. Do not invent new ones.
 
-Respond with ONLY a JSON object: {{"category": "<one of the five>"}}
+Also write a "title": a clear, plain-English subject line (max 12 words) that says what the email is about, so a busy reader understands it at a glance. Replace codes and noise with meaning: keep the key reference (order/booking number such as 5RSG-00133, or invoice number) and the destination port or customer when known, drop long carrier/vessel codes and "RE_"/"FW:" prefixes. Base it on the newest message, not a stale subject. Examples: "Check draft BL vs SI - 5RSG-00133 to Callao, Peru"; "Chase draft BL - SIN832764835"; "Missing goods receipt blocking billing - invoice 5250071877"; "Shipping instruction for 5RUS-80996 to Mombasa"; "Phishing: fake parcel customs fee".
+
+Respond with ONLY a JSON object: {{"category": "<category>", "intent": "<intent>", "title": "<title>"}}
 
 Subject: {subject}
 

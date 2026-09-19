@@ -1,6 +1,8 @@
 {
   "email_001": {
     "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - 5RSG-00133 to Callao, Peru",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
@@ -8,20 +10,26 @@
   },
   "email_002": {
     "category": "INVOICE_QUERY",
+    "intent": "charges_breakdown",
+    "title": "Query on charges breakdown for invoice 5250075931 - 5AKR-61849",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
     "has_defect": false
   },
   "email_003": {
-    "category": "BL_COMPARISON",
-    "status": "NEEDS_REVIEW",
-    "review_reason": "missing_attachment",
+    "category": "GENERAL",
+    "intent": "chase_document",
+    "title": "Chase draft BL for SIN832764835",
+    "status": "OK",
+    "review_reason": null,
     "defect_fields": [],
     "has_defect": false
   },
   "email_004": {
     "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - OC 5ALT-01226 Coated Ivory Board",
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
@@ -32,20 +40,26 @@
   },
   "email_005": {
     "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - PSGSE8148932 to Singapore",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
     "has_defect": false
   },
   "email_006": {
-    "category": "BL_COMPARISON",
-    "status": "NEEDS_REVIEW",
-    "review_reason": "missing_attachment",
+    "category": "GENERAL",
+    "intent": "chase_document",
+    "title": "Chase draft BL for PSGSE9638346",
+    "status": "OK",
+    "review_reason": null,
     "defect_fields": [],
     "has_defect": false
   },
   "email_007": {
     "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5RFR-37631 to Gdansk, Poland",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
@@ -53,6 +67,8 @@
   },
   "email_008": {
     "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5APH-26773 to Mersin, Turkey",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
@@ -60,6 +76,8 @@
   },
   "email_009": {
     "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - I978820812 to Mersin, Turkey",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
@@ -67,6 +85,8 @@
   },
   "email_010": {
     "category": "INVOICE_QUERY",
+    "intent": "charges_breakdown",
+    "title": "Charges breakdown query for invoice 5250071354 - 5ALT-38425",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
@@ -74,6 +94,8 @@
   },
   "email_011": {
     "category": "GENERAL",
+    "intent": "other_general",
+    "title": "Update and pending items summary for Le Havre v.QI540A",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
@@ -81,6 +103,8 @@
   },
   "email_012": {
     "category": "GENERAL",
+    "intent": "schedule_update",
+    "title": "Daily berthing report - Vessel MMSS 2507 V.257087E",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
@@ -88,6 +112,8 @@
   },
   "email_013": {
     "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - 5RFR-36541 to Mombasa, Kenya",
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
@@ -97,6 +123,8 @@
   },
   "email_014": {
     "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5RCY-60883 to Conakry, Guinea",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
@@ -104,34 +132,44 @@
   },
   "email_015": {
     "category": "SPAM",
+    "intent": "spam",
+    "title": "Phishing: mailbox storage limit and account verification alert",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
     "has_defect": false
   },
   "email_016": {
-    "category": "BL_COMPARISON",
-    "status": "NEEDS_REVIEW",
-    "review_reason": "missing_attachment",
+    "category": "GENERAL",
+    "intent": "chase_document",
+    "title": "Chase draft BL - 070500236763",
+    "status": "OK",
+    "review_reason": null,
     "defect_fields": [],
     "has_defect": false
   },
   "email_017": {
     "category": "INVOICE_QUERY",
+    "intent": "detention_demurrage",
+    "title": "Confirm D&D charges for MSDUL0942527743 - invoice 6437419879",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
     "has_defect": false
   },
   "email_018": {
-    "category": "BL_COMPARISON",
-    "status": "NEEDS_REVIEW",
-    "review_reason": "missing_attachment",
+    "category": "GENERAL",
+    "intent": "chase_document",
+    "title": "Chase draft BL for MCLSINJEA2576036",
+    "status": "OK",
+    "review_reason": null,
     "defect_fields": [],
     "has_defect": false
   },
   "email_019": {
     "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5RCY-72046 to Mersin, Turkey",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
@@ -139,6 +177,288 @@
   },
   "email_020": {
     "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5AAT-45299 to Busan, South Korea",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_021": {
+    "category": "GENERAL",
+    "intent": "automated_notice",
+    "title": "Reminder to submit SI and AED for pending shipments",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_022": {
+    "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5RCY-52735 to Pyeongtaek",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_023": {
+    "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5ALT-88568 to Karachi",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_024": {
+    "category": "INVOICE_QUERY",
+    "intent": "missing_gr",
+    "title": "Missing goods receipt for invoice 5250070084 - 5RSG-40824",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_025": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - SIN204711671 to Fremantle, Australia",
+    "status": "MISMATCH",
+    "review_reason": null,
+    "defect_fields": [
+      "port_of_discharge",
+      "container_count"
+    ],
+    "has_defect": true
+  },
+  "email_026": {
+    "category": "SPAM",
+    "intent": "spam",
+    "title": "Logistics automation suite promotion",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_027": {
+    "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instructions for 5ALT-48877 to Houston",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_028": {
+    "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction and draft BL request for 5ALT-12567 to Koper",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_029": {
+    "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5AAT-24771 to Callao, Peru",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_030": {
+    "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5RCY-63982 to New York",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_031": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - 5RCY-36057 to Mombasa",
+    "status": "MISMATCH",
+    "review_reason": null,
+    "defect_fields": [
+      "container_count",
+      "gross_weight_kg"
+    ],
+    "has_defect": true
+  },
+  "email_032": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - 5AAT-09134 to Karachi, Pakistan",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_033": {
+    "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5RMY-69379 to Yangon",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_034": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - 5SUS-64090 to Conakry, Guinea",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_035": {
+    "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5RCY-58842 to New York",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_036": {
+    "category": "GENERAL",
+    "intent": "chase_document",
+    "title": "Chase draft BL for SIN513709859",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_037": {
+    "category": "GENERAL",
+    "intent": "other_general",
+    "title": "Delivery planning and loading update for VISION 202 V.002",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_038": {
+    "category": "GENERAL",
+    "intent": "chase_document",
+    "title": "Chase draft BL for MCLSINJEA2535290 - Jebel Ali",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_039": {
+    "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5RUS-70076 to Cebu",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_040": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - I961183673 for Conakry",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_041": {
+    "category": "INVOICE_QUERY",
+    "intent": "detention_demurrage",
+    "title": "Confirm D and D detention charges for SIJ5165604",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_042": {
+    "category": "SI_REQUEST",
+    "intent": "si_submission",
+    "title": "Shipping instruction for 5RFR-02296 to Brisbane, Australia",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_043": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - 5RAE-97643 to Klaipeda",
+    "status": "MISMATCH",
+    "review_reason": null,
+    "defect_fields": [
+      "container_count"
+    ],
+    "has_defect": true
+  },
+  "email_044": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - OC 5RMY-26838 Paperboard",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_045": {
+    "category": "INVOICE_QUERY",
+    "intent": "detention_demurrage",
+    "title": "Confirm detention charges for ONEYSINF75161 - 5RFR-36968",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_046": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - 070500227799",
+    "status": "MISMATCH",
+    "review_reason": null,
+    "defect_fields": [
+      "notify_party"
+    ],
+    "has_defect": true
+  },
+  "email_047": {
+    "category": "GENERAL",
+    "intent": "chase_document",
+    "title": "Chase draft BL for SIN867980793",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_048": {
+    "category": "INVOICE_QUERY",
+    "intent": "detention_demurrage",
+    "title": "Confirm D&D charges for invoice I515186449",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_049": {
+    "category": "GENERAL",
+    "intent": "chase_document",
+    "title": "Chase draft BL for SIN733221418",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_050": {
+    "category": "GENERAL",
+    "intent": "chase_document",
+    "title": "Chase draft BL for SIN597746886",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],

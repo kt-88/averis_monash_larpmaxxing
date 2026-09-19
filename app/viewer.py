@@ -14,6 +14,7 @@ from dotenv import load_dotenv  # noqa: E402
 load_dotenv(ROOT / ".env")
 
 from loader import Inbox  # noqa: E402
+from src.classifier import INTENTS  # noqa: E402
 from src.extractor import BLANK, FIELDS  # noqa: E402
 from src.pipeline import analyze_comparison  # noqa: E402
 
@@ -44,11 +45,12 @@ def get_detail(source: str, email_id: str) -> dict:
 def build_table(submission: dict, inbox: Inbox) -> pd.DataFrame:
     rows = []
     for email_id, entry in submission.items():
-        subject = inbox.get(email_id)["subject"]
+        subject = entry.get("title") or inbox.get(email_id)["subject"]
         rows.append({
             "email_id": email_id,
-            "subject": subject if len(subject) <= 70 else subject[:67] + "...",
+            "title": subject if len(subject) <= 90 else subject[:87] + "...",
             "category": entry["category"],
+            "intent": entry.get("intent") or "-",
             "status": entry["status"],
         })
     return pd.DataFrame(rows)
@@ -57,9 +59,13 @@ def build_table(submission: dict, inbox: Inbox) -> pd.DataFrame:
 def show_summary(submission: dict) -> None:
     df = pd.DataFrame(submission).T
     st.metric("Total emails processed", len(df))
-    cats = ["BL_COMPARISON", "SI_REQUEST", "INVOICE_QUERY", "GENERAL", "SPAM"]
+    cats = list(INTENTS)
     for col, cat in zip(st.columns(len(cats)), cats):
         col.metric(cat, int((df["category"] == cat).sum()))
+    if "intent" in df:
+        with st.expander("Breakdown by intent"):
+            counts = df.groupby(["category", "intent"]).size().rename("emails").reset_index()
+            st.dataframe(counts, hide_index=True, width="stretch")
     statuses = ["OK", "MISMATCH", "NEEDS_REVIEW"]
     for col, s in zip(st.columns(len(statuses)), statuses):
         col.metric(s, int((df["status"] == s).sum()))
@@ -100,8 +106,10 @@ def show_review(entry: dict, detail: dict) -> None:
 def show_detail(source: str, email_id: str, entry: dict) -> None:
     inbox = get_inbox(source)
     email = inbox.get(email_id)
-    st.subheader(email["subject"])
-    st.write(f"**From:** {email['from']}  \n**Category:** {entry['category']}  \n**Status:** {entry['status']}")
+    st.subheader(entry.get("title") or email["subject"])
+    st.caption(f"Original subject: {email['subject']}")
+    st.write(f"**From:** {email['from']}  \n**Category:** {entry['category']}  \n"
+             f"**Intent:** {entry.get('intent') or '-'}  \n**Status:** {entry['status']}")
     with st.expander("Email body"):
         st.text(email["body"])
     if entry["category"] != "BL_COMPARISON":
@@ -140,23 +148,39 @@ def main() -> None:
     inbox = get_inbox(source)
     df = build_table(submission, inbox)
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     cat = c1.multiselect("Category", sorted(df["category"].unique()))
-    stat = c2.multiselect("Status", sorted(df["status"].unique()))
-    text = c3.text_input("Search subject / id")
+    intent = c2.multiselect("Intent", sorted(df["intent"].unique()))
+    stat = c3.multiselect("Status", sorted(df["status"].unique()))
+    text = c4.text_input("Search title / id")
     if cat:
         df = df[df["category"].isin(cat)]
+    if intent:
+        df = df[df["intent"].isin(intent)]
     if stat:
         df = df[df["status"].isin(stat)]
     if text:
-        df = df[df["subject"].str.contains(text, case=False) | df["email_id"].str.contains(text, case=False)]
+        df = df[df["title"].str.contains(text, case=False) | df["email_id"].str.contains(text, case=False)]
 
-    event = st.dataframe(df, hide_index=True, width="stretch", on_select="rerun", selection_mode="single-row")
-    rows = event.selection.rows
-    if rows:
-        email_id = df.iloc[rows[0]]["email_id"]
+    spam = df[df["category"] == "SPAM"]
+    df = df[df["category"] != "SPAM"]
+
+    st.subheader(f"Inbox ({len(df)} emails)")
+    picked = None
+    event = st.dataframe(df, hide_index=True, width="stretch", on_select="rerun",
+                         selection_mode="single-row", key="main_table")
+    if event.selection.rows:
+        picked = df.iloc[event.selection.rows[0]]["email_id"]
+
+    st.subheader(f"Spam ({len(spam)} emails)")
+    spam_event = st.dataframe(spam.drop(columns=["category", "status"]), hide_index=True, width="stretch",
+                              on_select="rerun", selection_mode="single-row", key="spam_table")
+    if spam_event.selection.rows and picked is None:
+        picked = spam.iloc[spam_event.selection.rows[0]]["email_id"]
+
+    if picked:
         st.divider()
-        show_detail(source, email_id, submission[email_id])
+        show_detail(source, picked, submission[picked])
     else:
         st.caption("Click a row to see details.")
 
