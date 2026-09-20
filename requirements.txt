@@ -6,3 +6,5 @@ python-docx
 openpyxl
 python-dotenv
 pytest
+fastapi
+uvicorn
