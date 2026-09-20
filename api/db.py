@@ -1,0 +1,106 @@
+"""Storage: SQLite locally, Postgres when DATABASE_URL is set (Neon, Supabase, Render...)."""
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+
+import sqlalchemy as sa
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def database_url() -> str:
+    url = os.environ.get("DATABASE_URL", "").strip()
+    if not url:
+        (ROOT / "output").mkdir(exist_ok=True)
+        return f"sqlite:///{(ROOT / 'output' / 'app.db').as_posix()}"
+    # Hosts hand out postgres:// or postgresql:// - SQLAlchemy needs the driver named.
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
+engine = sa.create_engine(database_url(), pool_pre_ping=True)
+meta = sa.MetaData()
+
+# One row per processed email. `entry` is the submission entry; `detail` holds the extracted
+# SI/BL fields and readable text for comparison emails (NULL until computed).
+results = sa.Table(
+    "results", meta,
+    sa.Column("email_id", sa.String(64), primary_key=True),
+    sa.Column("entry", sa.JSON, nullable=False),
+    sa.Column("detail", sa.JSON, nullable=True),
+    sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+)
+
+# Human confirm/correct decisions, kept apart from the automatic result so neither overwrites the other.
+decisions = sa.Table(
+    "decisions", meta,
+    sa.Column("email_id", sa.String(64), primary_key=True),
+    sa.Column("status", sa.String(32), nullable=False),
+    sa.Column("defect_fields", sa.JSON, nullable=False),
+    sa.Column("note", sa.Text, nullable=False, default=""),
+    sa.Column("decided_at", sa.DateTime(timezone=True), nullable=False),
+)
+
+
+def init_db() -> None:
+    meta.create_all(engine)
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _upsert(conn, table, key: str, values: dict) -> None:
+    exists = conn.execute(sa.select(table.c[key]).where(table.c[key] == values[key])).first()
+    if exists:
+        conn.execute(table.update().where(table.c[key] == values[key]).values(**values))
+    else:
+        conn.execute(table.insert().values(**values))
+
+
+def save_result(email_id: str, entry: dict, detail: dict | None = None, keep_detail: bool = True) -> None:
+    """Insert/replace an email's result. Without new detail, an existing stored detail is kept
+    unless keep_detail is False (used when a retry changes the email's outcome)."""
+    with engine.begin() as conn:
+        values = {"email_id": email_id, "entry": entry, "updated_at": _now()}
+        if detail is not None or not keep_detail:
+            values["detail"] = detail
+        _upsert(conn, results, "email_id", values)
+
+
+def save_detail(email_id: str, detail: dict) -> None:
+    with engine.begin() as conn:
+        conn.execute(results.update().where(results.c.email_id == email_id).values(detail=detail))
+
+
+def get_result(email_id: str) -> dict | None:
+    with engine.connect() as conn:
+        row = conn.execute(sa.select(results).where(results.c.email_id == email_id)).mappings().first()
+    return dict(row) if row else None
+
+
+def all_entries() -> dict[str, dict]:
+    with engine.connect() as conn:
+        rows = conn.execute(sa.select(results.c.email_id, results.c.entry).order_by(results.c.email_id))
+        return {r.email_id: r.entry for r in rows}
+
+
+def count_results() -> int:
+    with engine.connect() as conn:
+        return conn.execute(sa.select(sa.func.count()).select_from(results)).scalar_one()
+
+
+def save_decision(email_id: str, status: str, defect_fields: list[str], note: str) -> None:
+    with engine.begin() as conn:
+        _upsert(conn, decisions, "email_id", {
+            "email_id": email_id, "status": status, "defect_fields": defect_fields,
+            "note": note, "decided_at": _now(),
+        })
+
+
+def all_decisions() -> dict[str, dict]:
+    with engine.connect() as conn:
+        return {r.email_id: {"status": r.status, "defect_fields": r.defect_fields, "note": r.note}
+                for r in conn.execute(sa.select(decisions))}

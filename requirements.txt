@@ -8,3 +8,6 @@ python-dotenv
 pytest
 fastapi
 uvicorn
+
+sqlalchemy
+psycopg[binary]
