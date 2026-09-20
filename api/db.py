@@ -2,6 +2,7 @@
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import sqlalchemy as sa
 
@@ -13,14 +14,24 @@ def database_url() -> str:
     if not url:
         (ROOT / "output").mkdir(exist_ok=True)
         return f"sqlite:///{(ROOT / 'output' / 'app.db').as_posix()}"
-    # Hosts hand out postgres:// or postgresql:// - SQLAlchemy needs the driver named.
+    # Hosts hand out postgres:// or postgresql:// - name the pure-Python driver (pg8000: no native
+    # libpq, so it also works where Windows blocks compiled DLLs).
     for prefix in ("postgres://", "postgresql://"):
         if url.startswith(prefix):
-            return "postgresql+psycopg://" + url[len(prefix):]
-    return url
+            url = "postgresql+pg8000://" + url[len(prefix):]
+    # pg8000 has no sslmode/channel_binding URL options; SSL is switched on in make_engine().
+    parts = urlsplit(url)
+    query = [(k, v) for k, v in parse_qsl(parts.query) if k not in ("sslmode", "channel_binding")]
+    return urlunsplit(parts._replace(query=urlencode(query)))
 
 
-engine = sa.create_engine(database_url(), pool_pre_ping=True)
+def make_engine() -> sa.Engine:
+    url = database_url()
+    connect_args = {} if url.startswith("sqlite") else {"ssl_context": True}
+    return sa.create_engine(url, pool_pre_ping=True, connect_args=connect_args)
+
+
+engine = make_engine()
 meta = sa.MetaData()
 
 # One row per processed email. `entry` is the submission entry; `detail` holds the extracted

@@ -10,4 +10,4 @@ fastapi
 uvicorn
 
 sqlalchemy
-psycopg[binary]
+pg8000
