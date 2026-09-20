@@ -1,5 +1,5 @@
 "use client";
-
+//for displaying content in vercel
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { API, CATEGORIES, EmailRow, STATUSES, getEmails, getHealth } from "@/lib/api";
 import { Detail } from "@/components/Detail";
