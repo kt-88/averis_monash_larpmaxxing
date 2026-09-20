@@ -5,7 +5,7 @@ import {
   EmailDetail, FIELDS, FIELD_LABELS, FieldDetail, formatValue, getEmail, retryEmail, submitReview,
 } from "@/lib/api";
 import { diffWords, Seg } from "@/lib/textdiff";
-import { Conf, Pill, useToast } from "@/components/ui";
+import { Pill, useToast } from "@/components/ui";
 
 const REASON_TEXT: Record<string, string> = {
   missing_attachment: "The SI and/or the BL was not attached.",
@@ -31,7 +31,6 @@ function ValueCell({ field, value, det, segs, onSnippet }: {
           ? segs.map((s, i) => <span key={i}>{i ? " " : ""}{s.diff ? <mark className="d">{s.text}</mark> : s.text}</span>)
           : text}
       </span>{" "}
-      {det && <Conf d={det} />}
       {det?.snippet && (
         <button className="snip" title="Show this line in the source document" onClick={() => onSnippet(det.snippet as string)}>
           {det.snippet}
@@ -56,7 +55,6 @@ function FieldTable({ d, defects, onFocus }: {
               const siText = formatValue(f, d.si_fields?.[f]), blText = formatValue(f, d.bl_fields?.[f]);
               const differs = defects.includes(f);
               const diff = differs && siText && blText ? diffWords(siText, blText) : null;
-              const low = (si && si.normalized !== null && si.confidence < 0.6) || (bl && bl.normalized !== null && bl.confidence < 0.6);
               return (
                 <tr key={f} className={differs ? "diff" : ""}>
                   <td>{FIELD_LABELS[f]}</td>
@@ -64,7 +62,6 @@ function FieldTable({ d, defects, onFocus }: {
                   <td><ValueCell field={f} value={d.bl_fields?.[f]} det={bl} segs={diff?.right} onSnippet={(s) => onFocus("bl", s)} /></td>
                   <td>
                     {differs ? "MISMATCH" : "match"}
-                    {low && <div><span className="chip warn">low confidence</span></div>}
                   </td>
                 </tr>
               );
@@ -72,13 +69,7 @@ function FieldTable({ d, defects, onFocus }: {
           </tbody>
         </table>
       </div>
-      {d.si_detail && (
-        <p className="meta legend">
-          Confidence shows how sure the extractor is: the label was found, the source line really contains the value, and
-          the value looks valid. <span className="conf hi">80%+</span> <span className="conf mid">50-79%</span> <span className="conf lo">below 50%</span>
-          {" "}Click a grey source line to see it in the document.
-        </p>
-      )}
+      {d.si_detail && <p className="meta legend">Click a grey source line to see it in the document.</p>}
     </>
   );
 }
@@ -183,11 +174,6 @@ export function Detail({ id, onChanged, onClose, onNext }: {
 
   const d = item.detail;
   const isComparison = item.category === "BL_COMPARISON";
-  const lowFields = d ? FIELDS.flatMap((f) => (["si", "bl"] as Side[]).flatMap((side) => {
-    const det = (side === "si" ? d.si_detail : d.bl_detail)?.[f];
-    return det && det.normalized !== null && det.confidence < 0.6 ? [`${FIELD_LABELS[f]} (${side.toUpperCase()} ${Math.round(det.confidence * 100)}%)`] : [];
-  })) : [];
-
   return (
     <div className="panel">
       <button className="icon-btn" aria-label="Close details" title="Close (Esc)" onClick={onClose}>×</button>
@@ -200,7 +186,6 @@ export function Detail({ id, onChanged, onClose, onNext }: {
       {item.review_reason && !item.human_decision && (
         <div className="alert warn"><b>Needs a human decision:</b> {REASON_TEXT[item.review_reason] ?? item.review_reason} ({item.review_reason})</div>
       )}
-      {lowFields.length > 0 && <div className="alert warn"><b>Please double-check:</b> low confidence on {lowFields.join(", ")}.</div>}
       {item.detail_error && <div className="alert bad">Could not load the SI/BL fields: {item.detail_error}</div>}
       {isComparison && d && d.si_fields && d.bl_fields && (
         <>

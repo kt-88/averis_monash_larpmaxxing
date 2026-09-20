@@ -103,11 +103,7 @@ tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px;
 .chip.bad { background: var(--bad-bg); color: var(--bad); border-color: transparent; }
 .chip.warn { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
 
-/* ---- field comparison: confidence and source line ---- */
-.conf { display: inline-block; padding: 0 7px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-left: 2px; cursor: help; }
-.conf.hi { background: var(--ok-bg); color: var(--ok); }
-.conf.mid { background: var(--warn-bg); color: var(--warn); }
-.conf.lo { background: var(--bad-bg); color: var(--bad); }
+/* ---- field comparison: source line ---- */
 .val { font-weight: 600; }
 button.snip { display: block; margin-top: 2px; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; font-size: 12px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
 button.snip:hover { color: var(--accent); text-decoration: underline; }

@@ -187,7 +187,7 @@ function Home() {
         <aside className="detail-col" ref={panelRef}>
           {selected
             ? <Detail key={selected} id={selected} onChanged={refresh} onClose={() => setSelected(null)} onNext={pending.length ? goNext : undefined} />
-            : <div className="panel placeholder"><b>Pick an email</b><br />Its SI and BL fields, confidence and source lines will appear here.</div>}
+            : <div className="panel placeholder"><b>Pick an email</b><br />Its SI and BL fields and the source lines they were read from will appear here.</div>}
         </aside>
       </div>
 

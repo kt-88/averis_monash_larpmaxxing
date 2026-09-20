@@ -1,20 +1,9 @@
 "use client";
 
 import { ReactNode, createContext, useCallback, useContext, useState } from "react";
-import type { FieldDetail } from "@/lib/api";
 
 export function Pill({ status }: { status: string }) {
   return <span className={`pill ${status}`}>{status.replace("_", " ")}</span>;
-}
-
-/** Confidence badge: green >= 80%, amber 50-79%, red below. The tooltip shows the source line. */
-export function Conf({ d }: { d: FieldDetail }) {
-  const level = d.confidence >= 0.8 ? "hi" : d.confidence >= 0.5 ? "mid" : "lo";
-  return (
-    <span className={`conf ${level}`} title={d.snippet ? `Read from: ${d.snippet}` : "No source line"}>
-      {Math.round(d.confidence * 100)}%
-    </span>
-  );
 }
 
 export function Logo() {
