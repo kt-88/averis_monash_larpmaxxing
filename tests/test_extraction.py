@@ -71,6 +71,7 @@ def test_placeholders_are_blank(v):
     ("Discharge Port: X", "port_of_discharge"), ("POD: X", "port_of_discharge"),
     ("CONSIGNEE: X", "consignee"), ("To the Order of: X", "consignee"),
     ("Consignee (Non-Negotiable) X", "consignee"), ("Notify Party X", "notify_party"),
+    ("Notify Party/Intermediate Consignee: X", "notify_party"),
     ("Shipper/Exporter: X", "shipper"), ("Shipper (Principal or Seller) (\u53d1\u8d27\u4eba): X", "shipper"),
     ("Gross Weight (KG): 1", "gross_weight_kg"), ("Gross Wt (kgs): 1", "gross_weight_kg"),
     ("TOTAL Gross Weightnn(KGS): 1", "gross_weight_kg"),

@@ -3,7 +3,7 @@ import re
 _PATTERNS = {
     "shipper":           r"shipper(?:/exporter)?|exporter",
     "consignee":         r"consignee|to the order of|deliver to",
-    "notify_party":      r"notify(?: party)?",
+    "notify_party":      r"notify(?: party)?(?:\s*/\s*intermediate consignee)?",
     "port_of_loading":   r"port of loading|load(?:ing)? port|pol",
     "port_of_discharge": r"port of discharge|discharge port|destination port|pod",
     "container_count":   r"no\.? of containers(?: or packages)?|total containers|container count|containers?(?=\s*:)",
