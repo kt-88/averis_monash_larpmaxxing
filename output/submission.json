@@ -2318,7 +2318,7 @@
   "email_248": {
     "category": "SPAM",
     "intent": "spam",
-    "title": "Spam: fake prize draw and gift card offer",
+    "title": "Spam: fake prize and gift card notification",
     "status": "OK",
     "review_reason": null,
     "defect_fields": [],
@@ -4777,8 +4777,8 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 070500208599 - PaperOne Digital Copier Paper",
-    "status": "NEEDS_REVIEW",
-    "review_reason": "unreadable",
+    "status": "OK",
+    "review_reason": null,
     "defect_fields": [],
     "has_defect": false
   },
@@ -4786,8 +4786,8 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - PSGSE5969325 to Valparaiso, Chile",
-    "status": "NEEDS_REVIEW",
-    "review_reason": "unreadable",
+    "status": "OK",
+    "review_reason": null,
     "defect_fields": [],
     "has_defect": false
   },
@@ -4795,8 +4795,62 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - ONEYSINF26176 to Le Havre",
+    "status": "OK",
+    "review_reason": null,
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_515": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - SIJ9650826 to Aqaba, Jordan",
     "status": "NEEDS_REVIEW",
     "review_reason": "unreadable",
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_516": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - MCLSINJEA2551434 to Conakry",
+    "status": "NEEDS_REVIEW",
+    "review_reason": "missing_value",
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_517": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - MSDUL0942583113 to Callao, Peru",
+    "status": "NEEDS_REVIEW",
+    "review_reason": "missing_value",
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_518": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - MCLSINJEA2505344",
+    "status": "NEEDS_REVIEW",
+    "review_reason": "missing_value",
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_519": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - PSGSE4068841 for UAB Novakopa",
+    "status": "NEEDS_REVIEW",
+    "review_reason": "missing_value",
+    "defect_fields": [],
+    "has_defect": false
+  },
+  "email_520": {
+    "category": "BL_COMPARISON",
+    "intent": "check_docs",
+    "title": "Check draft BL vs SI - MSDUL0942520613 for 5RSG-63852",
+    "status": "NEEDS_REVIEW",
+    "review_reason": "missing_value",
     "defect_fields": [],
     "has_defect": false
   }
