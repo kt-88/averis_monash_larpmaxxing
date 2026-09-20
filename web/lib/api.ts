@@ -1,0 +1,62 @@
+export const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+export const FIELDS = [
+  "shipper", "consignee", "notify_party", "port_of_loading",
+  "port_of_discharge", "container_count", "gross_weight_kg",
+] as const;
+
+export const FIELD_LABELS: Record<string, string> = {
+  shipper: "Shipper",
+  consignee: "Consignee",
+  notify_party: "Notify party",
+  port_of_loading: "Port of loading",
+  port_of_discharge: "Port of discharge",
+  container_count: "Container count",
+  gross_weight_kg: "Gross weight (kg)",
+};
+
+export const CATEGORIES = ["BL_COMPARISON", "SI_REQUEST", "INVOICE_QUERY", "GENERAL", "SPAM"];
+export const STATUSES = ["OK", "MISMATCH", "NEEDS_REVIEW"];
+
+export type HumanDecision = { status: string; defect_fields: string[]; note: string };
+
+export type EmailRow = {
+  email_id: string;
+  category: string;
+  intent: string | null;
+  title: string | null;
+  subject: string;
+  status: string;
+  review_reason: string | null;
+  defect_fields: string[];
+  has_defect: boolean;
+  human_decision: HumanDecision | null;
+};
+
+export type EmailDetail = EmailRow & {
+  email: { subject: string; from: string; body: string; attachments: string[] };
+  detail: {
+    si_fields: Record<string, string | number | null> | null;
+    bl_fields: Record<string, string | number | null> | null;
+    si_text: string | null;
+    bl_text: string | null;
+  } | null;
+  detail_error?: string;
+};
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API}${path}`, { ...init, cache: "no-store" });
+  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+export const getHealth = () => request<{ ok: boolean; emails_processed: number }>("/health");
+export const getEmails = () => request<{ count: number; emails: EmailRow[] }>("/emails");
+export const getEmail = (id: string) => request<EmailDetail>(`/emails/${id}`);
+export const retryEmail = (id: string) => request<{ queued: number }>(`/emails/${id}/retry`, { method: "POST" });
+export const submitReview = (id: string, body: HumanDecision) =>
+  request<EmailRow>(`/emails/${id}/review`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });

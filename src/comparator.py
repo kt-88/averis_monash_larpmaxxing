@@ -7,8 +7,13 @@ PORT_FIELDS = {"port_of_loading", "port_of_discharge"}
 NUMERIC_FIELDS = {"container_count", "gross_weight_kg"}
 
 
+# Label some documents put in front of a party name ("/INTERMEDIATE CONSIGNEE: ACME"); not part of the name.
+PARTY_LABEL = re.compile(r"^\W*INTERMEDIATE CONSIGNEE\s*:?")
+
+
 def _clean(s) -> str:
-    s = re.sub(r"\([^)]*\)", " ", str(s).upper())
+    s = PARTY_LABEL.sub("", str(s).strip().upper())
+    s = re.sub(r"\([^)]*\)", " ", s)
     s = re.sub(r"[^A-Z0-9 ,]", " ", s)
     return re.sub(r"\s+", " ", s).strip(" ,")
 

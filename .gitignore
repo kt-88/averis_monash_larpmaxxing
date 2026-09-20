@@ -3,5 +3,6 @@ __pycache__/
 .env
 .cache/
 output/*.json
+output/*.db
 .pytest_cache/
 scratch/

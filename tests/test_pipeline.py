@@ -16,7 +16,7 @@ from src.comparator import compare_fields  # noqa: E402
 from src.pipeline import run_pipeline  # noqa: E402
 from src.report import REVIEW_REASONS, STATUSES  # noqa: E402
 
-KEYS = {"category", "status", "review_reason", "defect_fields", "has_defect"}
+KEYS = {"category", "intent", "title", "status", "review_reason", "defect_fields", "has_defect"}
 
 
 def test_comparator_is_deterministic():
