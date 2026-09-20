@@ -29,5 +29,14 @@ def check_doc_types(si_text: str, bl_text: str) -> str | None:
     return "wrong_doc_type" if detect_doc_type(bl_text) in ("OTHER", "SI") else None
 
 
-def check_missing_values(si_fields: dict, bl_fields: dict) -> str | None:
-    return "missing_value" if missing_fields(si_fields) or missing_fields(bl_fields) else None
+def excusable_blanks(si_fields: dict, bl_fields: dict, learned) -> list[str]:
+    """Fields a reviewer rule excuses: blank in the SI, filled in on the BL. A blank BL is never excused."""
+    si_blank, bl_blank = set(missing_fields(si_fields)), set(missing_fields(bl_fields))
+    return [f for f in FIELDS if f in learned and f in si_blank and f not in bl_blank]
+
+
+def check_missing_values(si_fields: dict, bl_fields: dict, learned=()) -> str | None:
+    """missing_value unless every blank is one a reviewer rule excuses (see excusable_blanks)."""
+    excused = set(excusable_blanks(si_fields, bl_fields, learned))
+    missing = (set(missing_fields(si_fields)) | set(missing_fields(bl_fields))) - excused
+    return "missing_value" if missing else None
