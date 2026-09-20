@@ -11,7 +11,12 @@ function Issue({ r }: { r: EmailRow }) {
       {r.status === "MISMATCH" && r.defect_fields.map((f) => <span key={f} className="chip bad">{FIELD_LABELS[f] ?? f}</span>)}
       {r.status === "NEEDS_REVIEW" && <span className="chip warn">{(r.review_reason ?? "review").replace(/_/g, " ")}</span>}
       {r.human_decision && <span className="chip">person decided</span>}
-      {r.status === "OK" && !r.human_decision && <span className="muted">-</span>}
+      {!!r.learned_rule?.length && (
+        <span className="chip learned" title={`No review needed: reviewers taught the system that a blank SI ${r.learned_rule.map((f) => FIELD_LABELS[f] ?? f).join(", ")} is fine when the BL has it`}>
+          learned rule
+        </span>
+      )}
+      {r.status === "OK" && !r.human_decision && !r.learned_rule?.length && <span className="muted">-</span>}
     </>
   );
 }

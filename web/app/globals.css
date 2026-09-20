@@ -2,12 +2,17 @@
   --bg: #f6f7f9; --card: #fff; --text: #1a2330; --muted: #667085; --line: #e3e7ed;
   --accent: #1f5f8b; --ok: #137a3f; --ok-bg: #e4f5ea; --bad: #b42318; --bad-bg: #fde8e6;
   --warn: #9a6700; --warn-bg: #fff4d6;
+  --on-accent: #fff; --scroll-thumb: #c5ccd8; --scroll-thumb-hover: #a9b3c2;
+  --zone-summary: #ffffff; --zone-inbox: #e8ecf1;                       /* summary lighter, inbox darker */
+  color-scheme: light dark;   /* native controls and scrollbars follow the theme */
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #12161c; --card: #1b212a; --text: #e8ecf1; --muted: #98a2b3; --line: #2b3441;
     --accent: #6cb2e0; --ok: #5fd08a; --ok-bg: #16301f; --bad: #ff8a80; --bad-bg: #3a1a18;
     --warn: #f2c14e; --warn-bg: #3a2f10;
+    --on-accent: #0b1620; --scroll-thumb: #3a4556; --scroll-thumb-hover: #52607a;
+    --zone-summary: #252d3a; --zone-inbox: #0d1116;
   }
 }
 * { box-sizing: border-box; }
@@ -178,3 +183,122 @@ pre { overflow-wrap: anywhere; }
 .two > div { min-width: 0; }
 .two pre { max-height: 50vh; }
 .two.full pre { max-height: none; }
+
+/* ---- scrollbars: slim and theme-coloured (dark in the dark theme) ---- */
+* { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); background-clip: content-box; }
+
+/* ---- toggle pills: radios and checkboxes drawn as rounded buttons ---- */
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.review .toggle { position: relative; display: inline-block; margin: 0; }
+.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }   /* still focusable and read by screen readers */
+.toggle span { display: inline-block; padding: 6px 14px; border-radius: 999px; font-size: 13px; cursor: pointer; user-select: none;
+  background: color-mix(in srgb, var(--text) 7%, var(--card)); border: 1px solid transparent; color: var(--text);
+  transition: background .15s, border-color .15s; }
+.toggle:hover span { background: color-mix(in srgb, var(--text) 13%, var(--card)); }
+.toggle input:checked + span { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.toggle input:checked + span::before { content: "\2713\00a0"; }   /* a tick, so "on" is not shown by colour alone */
+.toggle input:focus-visible + span { border-color: var(--text); outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- sidebar: Inbox / Spam ---- */
+.shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); max-width: 1680px; margin: 0 auto; }
+.shell > main { max-width: none; margin: 0; min-width: 0; }
+.side { position: sticky; top: 0; align-self: start; height: 100vh; padding: 24px 10px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.side-label { padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+button.nav-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text); text-align: left; font-size: 14px; }
+button.nav-item:hover:not(:disabled) { filter: none; background: color-mix(in srgb, var(--text) 8%, transparent); }
+button.nav-item.active { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); font-weight: 600; }
+button.nav-item svg { flex: none; opacity: .9; }
+.nav-item .count { margin-left: auto; font-size: 12px; opacity: .7; font-weight: 400; }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 10px 16px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .side-label { display: none; }
+  button.nav-item { width: auto; }
+}
+
+/* ---- tag on emails a learned reviewer rule resolved ---- */
+.chip.learned { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); border-color: transparent; }
+
+/* ---- two zones: a lighter summary box and a darker inbox/spam box ---- */
+.zone { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.zone + .zone { margin-top: 16px; }
+.zone-summary { background: var(--zone-summary); }
+.zone-summary .tile, .zone-summary .card { background: color-mix(in srgb, var(--text) 5%, var(--zone-summary)); }
+.zone-inbox { background: var(--zone-inbox); }
+.zone .tabs:first-child { margin-top: 0; }
+
+/* ---- smaller status tabs, and room between the filters and the list ---- */
+.tab { padding: 3px 11px; font-size: 13px; }
+.tab .count { font-size: 11px; margin-left: 3px; }
+.zone-inbox .hint { margin-bottom: 4px; }
+.zone-inbox .layout { margin-top: 22px; }
+.list-col h2 { margin-top: 0; }
+
+/* ---- review form: result options are rounded rectangles, field options are round pills, with a gap between ---- */
+.toggle.box span { border-radius: 8px; padding: 7px 18px; }
+.pills.fields { margin-top: 18px; }
+
+/* ---- collapsible sidebar ---- */
+.side-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.side-head .side-label { padding-bottom: 0; }
+button.side-toggle { width: 28px; height: 28px; padding: 0; display: grid; place-items: center; background: transparent; color: var(--muted); border: 1px solid transparent; border-radius: 8px; }
+button.side-toggle:hover:not(:disabled) { filter: none; background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+.shell { transition: grid-template-columns .18s ease; }
+.shell.collapsed { grid-template-columns: 56px minmax(0, 1fr); }
+.shell.collapsed .side { padding-left: 8px; padding-right: 8px; }
+.shell.collapsed .side-label, .shell.collapsed .nav-text, .shell.collapsed .nav-item .count { display: none; }
+.shell.collapsed .side-head { justify-content: center; }
+.shell.collapsed button.nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+@media (max-width: 900px) {
+  .shell.collapsed { grid-template-columns: minmax(0, 1fr); }
+  button.side-toggle { display: none; }
+  .shell.collapsed .nav-text, .shell.collapsed .nav-item .count { display: inline; }
+  .shell.collapsed button.nav-item { justify-content: flex-start; padding: 8px 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .shell { transition: none; } }
+
+/* ---- adjustable split between the email list and the details ---- */
+.divider { display: none; }
+@media (min-width: 1001px) {
+  .layout {
+    column-gap: 0;
+    /* list width = its share of the row, but never below 280px, and always leaving 320px for the details */
+    grid-template-columns: minmax(0, max(280px, min(calc(var(--list-share, .4167) * (100% - 14px)), calc(100% - 14px - 320px)))) 14px minmax(0, 1fr);
+  }
+  .divider { display: block; position: sticky; top: 12px; align-self: stretch; cursor: col-resize; touch-action: none; border-radius: 6px; outline: none; }
+  .divider::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; border-radius: 2px; background: var(--line); transition: background .15s, width .15s, margin-left .15s; }
+  .divider:hover::before, .divider:focus-visible::before, .layout.dragging .divider::before { width: 4px; margin-left: -2px; background: var(--accent); }
+  .divider:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+  .layout.dragging { user-select: none; cursor: col-resize; }
+}
+
+/* ---- collapsible filters ---- */
+button.filter-toggle { display: inline-flex; align-items: center; gap: 6px; }
+.filter-toggle .chev { transition: transform .15s; }
+.filter-toggle.open .chev { transform: rotate(180deg); }
+.filter-toggle .badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; }
+.filter-panel { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+
+/* ---- chrome-style tabs on the detail panel ---- */
+.panel.tabbed { padding: 0; }
+.panel.tabbed .panel-body { padding: 16px 18px 18px; }
+.panel.tabbed h3 { padding-right: 0; }
+.tabstrip { position: sticky; top: 0; z-index: 2; display: flex; align-items: flex-end; gap: 2px; padding: 8px 10px 0; border-radius: 9px 9px 0 0;
+  background: color-mix(in srgb, var(--card) 45%, var(--zone-inbox)); border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.tabstrip::-webkit-scrollbar { display: none; }
+button.ptab { position: relative; flex: none; padding: 8px 16px; border: 0; border-radius: 10px 10px 0 0; background: transparent; color: var(--muted); font-size: 13px; font-weight: 500; white-space: nowrap; margin-bottom: -1px; }
+button.ptab:hover:not(:disabled) { filter: none; }
+button.ptab:hover:not(.active) { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+button.ptab.active { background: var(--card); color: var(--text); z-index: 1; }
+/* the little inverted corners where the active tab meets the panel, as in a browser tab strip */
+.ptab.active::before, .ptab.active::after { content: ""; position: absolute; bottom: 0; width: 10px; height: 10px; pointer-events: none; }
+.ptab.active::before { left: -10px; background: radial-gradient(circle at 0 0, transparent 10px, var(--card) 10.5px); }
+.ptab.active::after { right: -10px; background: radial-gradient(circle at 100% 0, transparent 10px, var(--card) 10.5px); }
+button.ptab:focus-visible { outline-offset: -2px; }
+.ptab .dot { margin: 0 0 0 7px; }
+button.strip-close { flex: none; align-self: center; margin: 0 0 3px auto; width: 28px; height: 28px; padding: 0; font-size: 20px; line-height: 1; background: transparent; color: var(--muted); border: 1px solid transparent; border-radius: 8px; }
+button.strip-close:hover:not(:disabled) { filter: none; background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--text); }
