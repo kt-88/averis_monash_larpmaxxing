@@ -293,12 +293,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5AAT-09134 to Karachi",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_033": {
     "category": "SI_REQUEST",
@@ -313,12 +311,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5SUS-64090 to Conakry, Guinea",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_035": {
     "category": "SI_REQUEST",
@@ -407,12 +403,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - OC 5RMY-26838 for Paperboard",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_045": {
     "category": "INVOICE_QUERY",
@@ -519,12 +513,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5RVN-56543 to Karachi",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_057": {
     "category": "SI_REQUEST",
@@ -593,12 +585,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - ONEYSINF67240 for Fujito Paperone Inkjet Paper",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_065": {
     "category": "BL_COMPARISON",
@@ -664,7 +654,6 @@
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
-      "notify_party",
       "port_of_discharge",
       "container_count"
     ],
@@ -836,12 +825,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - SIJ2424154",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_091": {
     "category": "BL_COMPARISON",
@@ -850,7 +837,6 @@
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
-      "notify_party",
       "container_count"
     ],
     "has_defect": true
@@ -895,12 +881,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5RSG-54195 to Jebel Ali",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_097": {
     "category": "BL_COMPARISON",
@@ -909,7 +893,6 @@
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
-      "notify_party",
       "container_count",
       "gross_weight_kg"
     ],
@@ -1059,12 +1042,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - OC 5RSG-57972 Nhava Sheva",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_114": {
     "category": "GENERAL",
@@ -1118,7 +1099,6 @@
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
-      "notify_party",
       "port_of_loading"
     ],
     "has_defect": true
@@ -1368,8 +1348,7 @@
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
-      "shipper",
-      "notify_party"
+      "shipper"
     ],
     "has_defect": true
   },
@@ -1602,12 +1581,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - OC 5SUS-64510 to Dubai",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_172": {
     "category": "SI_REQUEST",
@@ -1846,23 +1823,19 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - MCLSINJEA2517534",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_198": {
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5APH-04427 to Apapa, Nigeria",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_199": {
     "category": "GENERAL",
@@ -2107,8 +2080,7 @@
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
-      "consignee",
-      "notify_party"
+      "consignee"
     ],
     "has_defect": true
   },
@@ -2125,12 +2097,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - OC 5SUS-49878 Asia Symbol",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_228": {
     "category": "SI_REQUEST",
@@ -2395,7 +2365,6 @@
     "review_reason": null,
     "defect_fields": [
       "shipper",
-      "notify_party",
       "port_of_discharge"
     ],
     "has_defect": true
@@ -2524,7 +2493,6 @@
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
-      "notify_party",
       "port_of_discharge"
     ],
     "has_defect": true
@@ -2761,12 +2729,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5AKR-76492 to Klaipeda",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_297": {
     "category": "GENERAL",
@@ -3131,12 +3097,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5AAT-05053 to Valparaiso, Chile",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_336": {
     "category": "SI_REQUEST",
@@ -3262,12 +3226,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - OC 5RCY-01041 to Nantong",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_350": {
     "category": "GENERAL",
@@ -3382,7 +3344,6 @@
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
-      "notify_party",
       "port_of_discharge",
       "gross_weight_kg"
     ],
@@ -3410,12 +3371,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5RCY-83061 to Koper, Slovenia",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_365": {
     "category": "SPAM",
@@ -3439,12 +3398,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - SIN108358328 for Mersin, Turkey",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_368": {
     "category": "SI_REQUEST",
@@ -3552,8 +3509,7 @@
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
-      "shipper",
-      "notify_party"
+      "shipper"
     ],
     "has_defect": true
   },
@@ -3824,12 +3780,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5RMY-11842 to Mersin, Turkey",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_410": {
     "category": "BL_COMPARISON",
@@ -4508,12 +4462,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5RSG-40911 to Houston, US",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_484": {
     "category": "SI_REQUEST",
@@ -4582,12 +4534,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5RUS-43614 for AL GURG STATIONERY LLC",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_492": {
     "category": "INVOICE_QUERY",
@@ -4629,12 +4579,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - OC 5AAT-65578 to Pyeongtaek",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_497": {
     "category": "INVOICE_QUERY",
@@ -4649,12 +4597,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5APH-57298 to Dubai",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_499": {
     "category": "BL_COMPARISON",
