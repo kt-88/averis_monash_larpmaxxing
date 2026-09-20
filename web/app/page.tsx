@@ -22,7 +22,7 @@ function EmailTable({ rows, selected, onPick, empty }: {
 }) {
   if (!rows.length) return <div className="table-wrap"><div className="empty">{empty}</div></div>;
   return (
-    <div className="table-wrap">
+    <div className="table-wrap scroll">
       <table>
         <thead><tr><th>ID</th><th>Title</th><th>Category</th><th>Intent</th><th>Status</th></tr></thead>
         <tbody>
