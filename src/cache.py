@@ -1,4 +1,6 @@
 """Disk cache + call counter for LLM calls."""
+import contextlib
+import contextvars
 import hashlib
 import json
 import os
@@ -10,6 +12,7 @@ CACHE_DIR = Path(os.environ.get("LLM_CACHE_DIR", ROOT / ".cache" / "llm"))
 _lock = threading.Lock()
 stats = {"api_calls": 0, "cache_hits": 0}
 _budget = {"max_calls": None}
+_fresh = contextvars.ContextVar("llm_fresh", default=False)
 
 
 class BudgetExceeded(Exception):
@@ -46,10 +49,21 @@ def cache_put(key: str, response: str) -> None:
     os.replace(tmp, CACHE_DIR / f"{key}.json")  # atomic swap: no reader ever sees a half-written file
 
 
+@contextlib.contextmanager
+def fresh_llm_calls():
+    """Inside this block saved answers are not read, so Gemini is asked again. The new answers are still saved,
+    replacing the old ones (used by "re-run with Gemini")."""
+    token = _fresh.set(True)
+    try:
+        yield
+    finally:
+        _fresh.reset(token)
+
+
 def cached_llm_call(model: str, prompt: str, call_fn) -> str:
     """Return the cached response for (model, prompt), else call_fn() and cache it."""
     key = cache_key(model, prompt)
-    hit = cache_get(key)
+    hit = None if _fresh.get() else cache_get(key)
     if hit is not None:
         return hit
     with _lock:
