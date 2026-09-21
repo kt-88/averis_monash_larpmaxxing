@@ -100,6 +100,28 @@ not a comparison/reporting issue, but it is the single largest lever on
 the final score (30% weight on stage1) — flagged to the classification
 owner separately.
 
+**Severity check:** confirmed all 91 misclassified emails are genuinely
+`OK` in ground truth — none is a real `MISMATCH` that got silently
+dropped by the misrouting. So this bug significantly hurts the stage1
+accuracy *number*, but causes **zero actual missed defects**. Worth
+fixing for score, not urgent for correctness/compliance.
+
+## Full-file audit (confirms nothing was missed)
+
+Re-ran the diff across all 520 emails and every category (not just the
+targeted disagreements above), to make sure nothing else was hiding.
+
+- **Category confusion:** exactly two directions exist anywhere in the
+  file — the 91 `BL_COMPARISON→GENERAL` above, and one reverse case,
+  `email_126` (gt `GENERAL/OK`, we said `BL_COMPARISON/NEEDS_REVIEW`,
+  empty defect fields — a wasted escalation, not a wrong defect claim).
+  `SI_REQUEST`, `INVOICE_QUERY`, `SPAM` have zero confusion.
+- **Field-level audit of all 129 correctly-routed `BL_COMPARISON`
+  pairs:** 122 exact matches, 7 mismatches — the same 7 emails already
+  diagnosed above (`email_208`, `351`, `407`, `499`, `512`, `513`,
+  `514`). No additional disagreements anywhere in the file.
+- No malformed submission entries.
+
 ## Summary for this area
 
 Of 200 compared documents, 3 have a traceable, non-comparator root cause
