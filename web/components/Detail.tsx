@@ -6,6 +6,8 @@ import {
 } from "@/lib/api";
 import { diffWords, Seg } from "@/lib/textdiff";
 import { Pill, useToast } from "@/components/ui";
+import { RerunPanel } from "@/components/Rerun";
+import { isSimulated } from "@/lib/tools";
 
 const REASON_TEXT: Record<string, string> = {
   missing_attachment: "The SI and/or the BL was not attached.",
@@ -49,8 +51,22 @@ function ValueCell({ field, value, det, segs, onSnippet }: {
           {det.snippet}
         </button>
       )}
+      {det?.agree === false && <div className="gemini-off">Gemini read: {formatValue(field, det.llm) || "nothing"}</div>}
     </>
   );
+}
+
+/** Gemini's own reading of the SI and BL, compared with the rules' (only present once Gemini was asked). */
+function secondOpinion(d: NonNullable<EmailDetail["detail"]>) {
+  let checked = 0, agree = 0;
+  for (const set of [d.si_detail, d.bl_detail]) {
+    for (const v of Object.values(set ?? {})) {
+      if (v.agree === null || v.agree === undefined) continue;
+      checked++;
+      if (v.agree) agree++;
+    }
+  }
+  return checked ? { checked, agree } : null;
 }
 
 function FieldTable({ d, defects, onFocus }: {
@@ -194,7 +210,7 @@ function ReviewForm({ item, onSaved, onNext }: { item: EmailDetail; onSaved: () 
       <div className="row">
         <button disabled={busy || (needsReason && !reason)} onClick={() => save(false)}>Save decision</button>
         {onNext && <button disabled={busy || (needsReason && !reason)} onClick={() => save(true)}>Save and next</button>}
-        <button className="secondary" disabled={busy} onClick={retry}>Retry processing</button>
+        <button className="secondary" disabled={busy} onClick={retry} title="Process it again using Gemini's saved answers. To ask Gemini afresh, use Re-run with Gemini on the Details tab.">Retry processing</button>
       </div>
     </div>
   );
@@ -261,7 +277,7 @@ export function Detail({ id, onChanged, onClose, onNext }: {
       </div>
 
       <div className="panel-body">
-        <h3>{item.title || item.subject}</h3>
+        <h3>{isSimulated(item.email_id) ? item.email.subject || item.title : item.title || item.email.subject}</h3>
         {item.human_decision && <div className="alert ok">A person set this result to {item.human_decision.status}.</div>}
         {needsDecision && (
           <div className="alert warn"><b>Needs a human decision:</b> {REASON_TEXT[item.review_reason as string] ?? item.review_reason} ({item.review_reason})</div>
@@ -271,7 +287,9 @@ export function Detail({ id, onChanged, onClose, onNext }: {
           <div className="meta">
             {item.email_id} · from {item.email.from} · {item.category} / {item.intent ?? "-"} · <Pill status={item.status} />
             <br />Original subject: {item.email.subject}
+            {isSimulated(item.email_id) && item.title && <><br />Gemini&apos;s title for it: {item.title}</>}
           </div>
+          <RerunPanel id={item.email_id} onDone={() => { load(); onChanged(); }} onDeleted={() => { onChanged(); onClose(); }} />
           {!!d?.learned_exceptions?.length && (
             <div className="alert ok">
               Resolved without review using what reviewers taught the system: a blank SI value was accepted for{" "}
@@ -284,6 +302,15 @@ export function Detail({ id, onChanged, onClose, onNext }: {
               {item.status === "MISMATCH"
                 ? <div className="alert bad">SI and BL differ on: {item.defect_fields.map((f) => FIELD_LABELS[f] ?? f).join(", ")}</div>
                 : item.status === "OK" && <div className="alert ok">No mismatch detected.</div>}
+              {(() => {
+                const so = secondOpinion(d);
+                return so && (
+                  <div className={`alert ${so.agree === so.checked ? "ok" : "warn"}`}>
+                    <b>Gemini second opinion:</b> Gemini read the SI and the BL on its own and matched {so.agree} of {so.checked} values
+                    {so.agree === so.checked ? "." : ". The values it read differently are marked below; the document's own value is the one used."}
+                  </div>
+                );
+              })()}
               <FieldTable d={d} defects={item.defect_fields} onFocus={(side, snippet) => { setFocus({ side, snippet }); setTab("sources"); }} />
             </>
           )}

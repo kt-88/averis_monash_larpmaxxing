@@ -99,7 +99,7 @@ def test_each_field_has_the_five_keys():
     d = extract_fields_detailed(SI_TEXT)
     assert list(d) == FIELDS
     for v in d.values():
-        assert set(v) == {"value", "normalized", "confidence", "snippet", "label_found"}
+        assert set(v) == {"value", "normalized", "confidence", "snippet", "label_found", "llm", "agree"}
         assert 0.0 <= v["confidence"] <= 1.0
 
 
@@ -307,3 +307,42 @@ def test_real_corrupt_pdfs_are_unreadable():
 def test_real_blank_si_files_keep_blank_fields_null():
     d = extract_fields_detailed(_read("email_519_SI.txt"))
     assert d["shipper"]["normalized"] is None and d["shipper"]["label_found"] is True
+
+
+# ---------- "re-run with Gemini": the cross-check and the fresh-call switch ----------
+def test_agree_is_unset_when_the_llm_was_not_asked():
+    d = extract_fields_detailed(SI_TEXT)
+    assert all(v["agree"] is None and v["llm"] is None for v in d.values())
+
+
+def test_agree_records_whether_the_llm_matched(monkeypatch):
+    replies = {"shipper": ("ACME TRADING LTD", "Shipper: ACME TRADING LTD"),
+               "consignee": ("SOMEONE ELSE", "Consignee: BETA CO")}
+    monkeypatch.setattr(extractor, "_llm_extract", lambda text, model=None: replies)
+    with extractor.cross_check_with_llm():
+        d = extract_fields_detailed(SI_TEXT)
+    assert d["shipper"]["agree"] is True and d["shipper"]["llm"] == "ACME TRADING LTD"
+    assert d["consignee"]["agree"] is False and d["consignee"]["llm"] == "SOMEONE ELSE"
+    assert d["consignee"]["normalized"] == "BETA CO"          # the value from the document still wins
+
+
+def test_a_requested_cross_check_does_not_hide_an_llm_failure(monkeypatch):
+    def down(text, model=None):
+        raise RuntimeError("429 quota")
+    monkeypatch.setattr(extractor, "_llm_extract", down)
+    with pytest.raises(RuntimeError):
+        with extractor.cross_check_with_llm():
+            extract_fields_detailed(SI_TEXT)
+    assert extract_fields_detailed(SI_TEXT)["shipper"]["normalized"] == "ACME TRADING LTD"   # normal runs still fall back
+
+
+def test_fresh_llm_calls_ignore_the_saved_answer(tmp_path, monkeypatch):
+    from src import cache
+    monkeypatch.setattr(cache, "CACHE_DIR", tmp_path)
+    calls = []
+    fn = lambda: (calls.append(1) or f"answer {len(calls)}")
+    assert cache.cached_llm_call("m", "prompt", fn) == "answer 1"
+    assert cache.cached_llm_call("m", "prompt", fn) == "answer 1" and len(calls) == 1      # normally: saved answer
+    with cache.fresh_llm_calls():
+        assert cache.cached_llm_call("m", "prompt", fn) == "answer 2"                      # asked again
+    assert cache.cached_llm_call("m", "prompt", fn) == "answer 2" and len(calls) == 2      # the new answer replaced the old

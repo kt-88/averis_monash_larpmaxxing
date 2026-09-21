@@ -5,12 +5,14 @@ import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from "react";
 import { API, CATEGORIES, EmailRow, getEmails, getHealth } from "@/lib/api";
+import { Compose } from "@/components/Compose";
 import { Detail } from "@/components/Detail";
 import { EmailTable } from "@/components/EmailTable";
 import { RunControl } from "@/components/RunControl";
 import { Summary } from "@/components/Summary";
 import { Logo, ToastProvider, useToast } from "@/components/ui";
 import { downloadReport } from "@/lib/report";
+import { SimInfo, getSimInfo, isSimulated } from "@/lib/tools";
 
 const STATUS_TABS: { key: string; label: string }[] = [
   { key: "", label: "All" },
@@ -39,6 +41,8 @@ function Home() {
   const [filtersOpen, setFiltersOpen] = useState(false);   // the category / intent dropdowns are tucked away by default
   const [sideOpen, setSideOpen] = useState(true);        // sidebar expanded, or collapsed to icons
   const [listShare, setListShare] = useState(DEFAULT_SHARE); // share of the width the email list takes
+  const [composeOpen, setComposeOpen] = useState(false);       // the "new email" window (email simulator)
+  const [sim, setSim] = useState<SimInfo | null>(null);         // null until the backend says the simulator is on
   const layoutRef = useRef<HTMLDivElement>(null);
   const [minutes, setMinutes] = useState(3);      // assumption behind "time saved": minutes per manual check
   const panelRef = useRef<HTMLElement>(null);
@@ -52,6 +56,9 @@ function Home() {
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    if (online) getSimInfo().then((i) => setSim(i.enabled ? i : null)).catch(() => setSim(null));
+  }, [online]);
   // While the backend is down (or waking up on free hosting), keep retrying so the page recovers on its own.
   useEffect(() => {
     if (online) { setWaited(0); return; }
@@ -149,8 +156,10 @@ function Home() {
   const tabCount = (key: string) => (key ? rows.filter((r) => r.status === key).length : rows.length);
 
   // The review queue: comparisons the system would not decide alone and nobody has decided yet.
+  // Emails composed in the simulator stay visible in the inbox, but are not counted in the numbers, the queue or the report.
+  const real = useMemo(() => rows.filter((r) => !isSimulated(r.email_id)), [rows]);
   const pending = useMemo(
-    () => rows.filter((r) => r.category === "BL_COMPARISON" && r.review_reason && !r.human_decision), [rows]);
+    () => real.filter((r) => r.category === "BL_COMPARISON" && r.review_reason && !r.human_decision), [real]);
 
   const startReview = () => {
     setCategory(""); setIntent(""); setQ(""); setStatus("NEEDS_REVIEW"); setView("inbox");
@@ -166,9 +175,10 @@ function Home() {
   // Keyboard shortcuts: "/" search, j / k next and previous email, Esc close. Ignored while typing.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || composeOpen) return;
       if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement).tagName)) return;
-      if (e.key === "/") { e.preventDefault(); searchRef.current?.focus(); }
+      if (e.key === "c" && sim) { e.preventDefault(); setComposeOpen(true); }
+      else if (e.key === "/") { e.preventDefault(); searchRef.current?.focus(); }
       else if (e.key === "Escape") setSelected(null);
       else if (e.key === "j" || e.key === "k") {
         const i = visible.findIndex((r) => r.email_id === selected);
@@ -178,7 +188,7 @@ function Home() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [visible, selected, pick]);
+  }, [visible, selected, pick, composeOpen, sim]);
 
   return (
     <div className={`shell ${sideOpen ? "" : "collapsed"}`}>
@@ -210,7 +220,15 @@ function Home() {
             <p className="sub">SI vs draft BL checks, from inbox to discrepancy report.</p>
           </div>
         </div>
-        <span className={`live ${online ? "on" : "off"}`}>{online ? "Backend online" : "Backend offline"}</span>
+        <div className="head-actions">
+          {sim && (
+            <button className="compose-btn" onClick={() => setComposeOpen(true)} title="Simulate an email arriving in the inbox (c)">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+              Compose
+            </button>
+          )}
+          <span className={`live ${online ? "on" : "off"}`}>{online ? "Backend online" : "Backend offline"}</span>
+        </div>
       </div>
 
       {!online && (
@@ -222,7 +240,7 @@ function Home() {
       )}
 
       <section className="zone zone-summary" aria-label="Summary">
-        <Summary rows={rows} loaded={loaded} minutes={minutes} onMinutes={changeMinutes} onStartReview={startReview} />
+        <Summary rows={real} simulated={rows.length - real.length} loaded={loaded} minutes={minutes} onMinutes={changeMinutes} onStartReview={startReview} />
       </section>
 
       <section className="zone zone-inbox" aria-label={view === "spam" ? "Spam" : "Inbox"}>
@@ -244,7 +262,7 @@ function Home() {
         <input ref={searchRef} type="text" placeholder="Search title / id  ( / )" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search" />
         <button className="secondary" onClick={refresh}>Refresh</button>
         <button className="secondary" disabled={!rows.length}
-          onClick={() => toast(`Report downloaded: ${downloadReport(rows)} comparisons that need attention.`, "ok")}>
+          onClick={() => toast(`Report downloaded: ${downloadReport(real)} comparisons that need attention.`, "ok")}>
           Download report (CSV)
         </button>
         <RunControl onDone={refresh} />
@@ -260,7 +278,7 @@ function Home() {
           <button className="secondary" disabled={!activeFilters} onClick={() => { setCategory(""); setIntent(""); }}>Clear filters</button>
         </div>
       )}
-      <p className="hint">Shortcuts: <kbd>/</kbd> search · <kbd>j</kbd> <kbd>k</kbd> next / previous email · <kbd>Esc</kbd> close</p>
+      <p className="hint">Shortcuts: {sim && <><kbd>c</kbd> new email · </>}<kbd>/</kbd> search · <kbd>j</kbd> <kbd>k</kbd> next / previous email · <kbd>Esc</kbd> close</p>
 
       <div className="layout" ref={layoutRef} style={{ "--list-share": listShare } as CSSProperties}>
         <div className="list-col">
@@ -281,6 +299,11 @@ function Home() {
         </aside>
       </div>
       </section>
+
+      {composeOpen && sim && (
+        <Compose info={sim} onClose={() => setComposeOpen(false)} onChanged={refresh}
+          onOpenEmail={(id) => { setView("inbox"); setCategory(""); setIntent(""); setQ(""); setStatus(""); pick(id); }} />
+      )}
 
       <footer className="foot">
         <span>Next.js on Vercel · FastAPI on Render · Postgres on Neon · Gemini reads the messy documents</span>

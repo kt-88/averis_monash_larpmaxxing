@@ -10,6 +10,7 @@ function Issue({ r }: { r: EmailRow }) {
     <>
       {r.status === "MISMATCH" && r.defect_fields.map((f) => <span key={f} className="chip bad">{FIELD_LABELS[f] ?? f}</span>)}
       {r.status === "NEEDS_REVIEW" && <span className="chip warn">{(r.review_reason ?? "review").replace(/_/g, " ")}</span>}
+      {r.email_id.startsWith("sim_") && <span className="chip learned" title="Composed in the simulator: not part of the provided inbox">Simulated</span>}
       {r.human_decision && <span className="chip">person decided</span>}
       {!!r.learned_rule?.length && (
         <span className="chip learned" title={`No review needed: reviewers taught the system that a blank SI ${r.learned_rule.map((f) => FIELD_LABELS[f] ?? f).join(", ")} is fine when the BL has it`}>
@@ -62,7 +63,10 @@ export function EmailTable({ rows, selected, onPick, empty, maxHeight, loading }
             >
               <td className="mono">{r.email_id.replace("email_", "")}</td>
               <td>
-                <div className="clip">{r.title || r.subject}</div>
+                {/* the provided emails show a plain-English title; an email you composed shows your own subject */}
+                <div className="clip" title={r.email_id.startsWith("sim_") && r.title ? `Gemini's title for it: ${r.title}` : undefined}>
+                  {r.email_id.startsWith("sim_") ? r.subject || r.title : r.title || r.subject}
+                </div>
                 <div className="muted small">{r.category.replace("_", " ")} · {r.intent ?? "-"}</div>
               </td>
               <td><Pill status={r.status} /></td>

@@ -14,7 +14,8 @@ from pydantic import BaseModel
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
-from api import db  # noqa: E402
+from api import db, rerun, simulator  # noqa: E402
+from api.livebox import LiveInbox  # noqa: E402
 from loader import Inbox  # noqa: E402
 from src import learning  # noqa: E402
 from src.cache import BudgetExceeded  # noqa: E402
@@ -33,12 +34,15 @@ app.add_middleware(
 )
 
 db.init_db()
+app.include_router(simulator.build_router(lambda: get_inbox()))   # compose an email: api/simulator.py
+app.include_router(rerun.build_router(lambda: get_inbox()))       # re-run one email with Gemini: api/rerun.py
 
 _run = {"state": "idle", "done": 0, "total": 0, "failed": []}
 
 
-def get_inbox() -> Inbox:
-    return Inbox(SOURCE if SOURCE.startswith("http") or Path(SOURCE).is_absolute() else str(ROOT / SOURCE))
+def get_inbox() -> LiveInbox:
+    """The provided emails plus any composed in the simulator (api/simulator.py)."""
+    return LiveInbox(Inbox(SOURCE if SOURCE.startswith("http") or Path(SOURCE).is_absolute() else str(ROOT / SOURCE)))
 
 
 def merged(email_id: str, entry: dict, decisions: dict, learned: dict | None = None) -> dict:
