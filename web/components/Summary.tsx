@@ -6,8 +6,8 @@ import type { EmailRow } from "@/lib/api";
  * Headline numbers for the whole inbox.
  * "Resolved automatically" = a comparison that needed no person: it was decided by the rules and no review reason was raised.
  */
-export function Summary({ rows, loaded, minutes, onMinutes, onStartReview }: {
-  rows: EmailRow[]; loaded: boolean; minutes: number; onMinutes: (m: number) => void; onStartReview: () => void;
+export function Summary({ rows, simulated = 0, loaded, minutes, onMinutes, onStartReview }: {
+  rows: EmailRow[]; simulated?: number; loaded: boolean; minutes: number; onMinutes: (m: number) => void; onStartReview: () => void;
 }) {
   if (!loaded) {
     return (
@@ -72,6 +72,9 @@ export function Summary({ rows, loaded, minutes, onMinutes, onStartReview }: {
           </div>
         </div>
       </div>
+      {simulated > 0 && (
+        <p className="hint">{simulated} simulated test email{simulated === 1 ? " is" : "s are"} in the inbox but not counted in these numbers.</p>
+      )}
     </>
   );
 }

@@ -1,4 +1,6 @@
 """Stage 2: extract the 7 comparison fields from a document's text."""
+import contextlib
+import contextvars
 import json
 import os
 import re
@@ -15,6 +17,7 @@ FIELDS = [
 ]
 BLANK = "BLANK"
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "extract_prompt.txt"
+_cross_check = contextvars.ContextVar("extractor_cross_check", default=False)
 PLACEHOLDER = re.compile(r"^[\s_\-?.]*$|^(TBA|TBC|TBD|N/?A|NIL|NONE|BLANK)$", re.I)
 
 
@@ -116,12 +119,15 @@ def build_field(field: str, text: str, rx, llm=None) -> dict:
         else:
             conf = min(conf, 0.4)                        # they disagree
     return {"value": raw, "normalized": normalized, "confidence": round(conf, 2),
-            "snippet": snippet, "label_found": label_found}
+            "snippet": snippet, "label_found": label_found,
+            # Set only when the LLM was asked: what it read, and whether that matches the value we settled on.
+            "llm": llm_val if llm_asked else None,
+            "agree": (normalized == llm_val) if llm_asked else None}
 
 
 def _needs_llm(rx: dict) -> bool:
     """Only spend an API call when the regex could not settle every field."""
-    if os.environ.get("VERIFY_WITH_LLM") == "1":
+    if os.environ.get("VERIFY_WITH_LLM") == "1" or _cross_check.get():
         return True
     for f in FIELDS:
         hit = rx.get(f)
@@ -141,6 +147,8 @@ def extract_fields_detailed(text: str, model: str | None = None) -> dict:
         except BudgetExceeded:
             raise                                                    # not a document problem
         except Exception as e:                                       # API down etc.: fall back to regex only
+            if _cross_check.get():
+                raise                                                # a requested cross-check must not pretend it ran
             print(f"[extractor] LLM unavailable, using regex only: {e!r}", flush=True)
     return {f: build_field(f, text, rx.get(f), llm.get(f)) for f in FIELDS}
 
@@ -152,3 +160,13 @@ def flat_values(detail: dict) -> dict:
 
 def extract_fields(text: str, model: str | None = None) -> dict:
     return flat_values(extract_fields_detailed(text, model))
+
+
+@contextlib.contextmanager
+def cross_check_with_llm():
+    """Inside this block every document is also read by the LLM, and each field records whether it agreed."""
+    token = _cross_check.set(True)
+    try:
+        yield
+    finally:
+        _cross_check.reset(token)

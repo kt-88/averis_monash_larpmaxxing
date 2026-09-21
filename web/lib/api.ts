@@ -55,6 +55,8 @@ export type FieldDetail = {
   confidence: number;
   snippet: string | null;
   label_found: boolean;
+  llm?: string | number | null;   // what Gemini read, when it was asked (re-run with Gemini)
+  agree?: boolean | null;
 };
 
 export type EmailDetail = EmailRow & {
