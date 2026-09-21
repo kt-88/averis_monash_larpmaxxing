@@ -194,7 +194,7 @@ function Home() {
     <div className={`shell ${sideOpen ? "" : "collapsed"}`}>
       <nav className="side" aria-label="Mailbox views">
         <div className="side-head">
-          <div className="side-label">Mailbox</div>
+          <div className="side-label">Overview</div>
           <button className="side-toggle" aria-expanded={sideOpen} aria-label={sideOpen ? "Collapse sidebar" : "Expand sidebar"}
             title={sideOpen ? "Collapse sidebar" : "Expand sidebar"} onClick={toggleSide}>
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -202,6 +202,12 @@ function Home() {
             </svg>
           </button>
         </div>
+        <button className={`nav-item ${view === "summary" ? "active" : ""}`} aria-current={view === "summary" ? "page" : undefined} title="Summary" onClick={() => setView("summary")}>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
+          <span className="nav-text">Summary</span>
+        </button>
+        <div className="side-divider" role="presentation" />
+        <div className="side-label sub-label">Mailbox</div>
         <button className={`nav-item ${view === "inbox" ? "active" : ""}`} aria-current={view === "inbox" ? "page" : undefined} title="Inbox" onClick={() => setView("inbox")}>
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z" /></svg>
           <span className="nav-text">Inbox</span><span className="count">{total(false)}</span>
@@ -209,12 +215,6 @@ function Home() {
         <button className={`nav-item ${view === "spam" ? "active" : ""}`} aria-current={view === "spam" ? "page" : undefined} title="Spam" onClick={() => setView("spam")}>
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2 3 6v6c0 5 3.8 9.3 9 10 5.2-.7 9-5 9-10V6z" /><path d="M12 8v4M12 16h.01" /></svg>
           <span className="nav-text">Spam</span><span className="count">{total(true)}</span>
-        </button>
-        <div className="side-divider" role="presentation" />
-        <div className="side-label sub-label">Overview</div>
-        <button className={`nav-item ${view === "summary" ? "active" : ""}`} aria-current={view === "summary" ? "page" : undefined} title="Summary" onClick={() => setView("summary")}>
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
-          <span className="nav-text">Summary</span>
         </button>
       </nav>
     <main>
@@ -227,12 +227,6 @@ function Home() {
           </div>
         </div>
         <div className="head-actions">
-          {sim && (
-            <button className="compose-btn" onClick={() => setComposeOpen(true)} title="Simulate an email arriving in the inbox (c)">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
-              Compose
-            </button>
-          )}
           <span className={`live ${online ? "on" : "off"}`}>{online ? "Backend online" : "Backend offline"}</span>
         </div>
       </div>
@@ -260,6 +254,12 @@ function Home() {
       </div>
 
       <div className="filters">
+        {sim && (
+          <button className="compose-btn" onClick={() => setComposeOpen(true)} title="Simulate an email arriving in the inbox (c)">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+            Compose
+          </button>
+        )}
         <button className={`secondary filter-toggle ${filtersOpen ? "open" : ""}`} aria-expanded={filtersOpen} aria-controls="filter-panel" onClick={toggleFilters}>
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z" /></svg>
           Filters
