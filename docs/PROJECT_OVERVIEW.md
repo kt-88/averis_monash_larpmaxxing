@@ -58,7 +58,6 @@ averis_monash_larpmaxxing/
 ├── data/         The hackathon dataset (emails and attachments)
 ├── output/       Pipeline results and the local database
 ├── tests/        Automated tests
-├── app/          Old Streamlit viewer (kept, no longer needed)
 ├── docs/         Documentation (this file)
 ├── main.py       Command-line entry point for the pipeline
 ├── loader.py     Hackathon-provided data loader
@@ -178,7 +177,6 @@ cd web && npm run dev                        # frontend on :3000
 - The remaining 47 mismatches were only partly spot-checked. The ones reviewed looked like genuine differences (ports, container counts, weights), but not all were checked.
 - `README.md` describes the pipeline but not the API, database or web app. It should be updated before submission, with the live link and design notes.
 - `__pycache__` folders are tracked in git and show up as modified after every run. Untrack them.
-- `app/viewer.py` (Streamlit) is superseded by `web/` and can be deleted once nobody needs it.
 
 ## 9b. Learning from human review
 

@@ -1922,12 +1922,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - OC 5RCY-77318",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_209": {
     "category": "SI_REQUEST",
@@ -3247,7 +3245,6 @@
     "status": "MISMATCH",
     "review_reason": null,
     "defect_fields": [
-      "notify_party",
       "container_count",
       "gross_weight_kg"
     ],
@@ -3760,12 +3757,10 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5RUS-74951 to Yangon, Myanmar",
-    "status": "MISMATCH",
+    "status": "OK",
     "review_reason": null,
-    "defect_fields": [
-      "notify_party"
-    ],
-    "has_defect": true
+    "defect_fields": [],
+    "has_defect": false
   },
   "email_408": {
     "category": "BL_COMPARISON",
@@ -4606,10 +4601,12 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 5RUS-81876 to Ho Chi Minh City",
-    "status": "NEEDS_REVIEW",
-    "review_reason": "unreadable",
-    "defect_fields": [],
-    "has_defect": false
+    "status": "MISMATCH",
+    "review_reason": null,
+    "defect_fields": [
+      "gross_weight_kg"
+    ],
+    "has_defect": true
   },
   "email_500": {
     "category": "INVOICE_QUERY",
@@ -4723,8 +4720,8 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - 070500208599 - PaperOne Digital Copier Paper",
-    "status": "OK",
-    "review_reason": null,
+    "status": "NEEDS_REVIEW",
+    "review_reason": "unreadable",
     "defect_fields": [],
     "has_defect": false
   },
@@ -4732,8 +4729,8 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - PSGSE5969325 to Valparaiso, Chile",
-    "status": "OK",
-    "review_reason": null,
+    "status": "NEEDS_REVIEW",
+    "review_reason": "unreadable",
     "defect_fields": [],
     "has_defect": false
   },
@@ -4741,8 +4738,8 @@
     "category": "BL_COMPARISON",
     "intent": "check_docs",
     "title": "Check draft BL vs SI - ONEYSINF26176 to Le Havre",
-    "status": "OK",
-    "review_reason": null,
+    "status": "NEEDS_REVIEW",
+    "review_reason": "unreadable",
     "defect_fields": [],
     "has_defect": false
   },

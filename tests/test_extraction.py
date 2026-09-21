@@ -17,7 +17,8 @@ from src.cache import BudgetExceeded
 from src.extractor import FIELDS, build_field, extract_fields, extract_fields_detailed, flat_values
 from src.labels import parse_line
 from src.normalize import is_blank, normalize
-from src.readers import UnreadableAttachment, read_attachment, row_to_line
+from src.pipeline import analyze_comparison
+from src.readers import ScannedDocument, UnreadableAttachment, read_attachment, row_to_line
 
 DATA = ROOT / "data" / "attachments"
 
@@ -252,37 +253,62 @@ def _scanned_pdf() -> bytes:
     return buf.getvalue()
 
 
-def test_scanned_pdf_goes_to_vision(monkeypatch):
+def test_a_scanned_pdf_is_escalated_but_the_reviewer_gets_a_transcript(monkeypatch):
     seen = {}
 
     def fake(prompt, pages):
         seen["pages"] = pages
         return "SHIPPING INSTRUCTION\nShipper: ACME LTD\nContainers: 6 x 40'HC\n"
     monkeypatch.setattr(readers, "llm_vision_text", fake)
-    text = read_attachment("scan.pdf", _scanned_pdf())
-    assert seen["pages"][0][:4] == b"\x89PNG" and extract_fields(text)["container_count"] == 6
+    with pytest.raises(ScannedDocument, match="scanned image") as e:
+        read_attachment("scan.pdf", _scanned_pdf())
+    assert seen["pages"][0][:4] == b"\x89PNG"                      # the pages went to the vision model
+    assert "Transcribed from a scanned image" in e.value.text and "Shipper: ACME LTD" in e.value.text
 
 
-def test_scanned_pdf_vision_failure_raises_unreadable(monkeypatch):
+def test_a_scanned_pdf_is_an_unreadable_attachment_so_it_maps_to_the_unreadable_reason():
+    assert issubclass(ScannedDocument, UnreadableAttachment)
+
+
+def test_a_scanned_pdf_is_escalated_even_if_the_vision_model_fails(monkeypatch):
     def fail(prompt, pages):
         raise RuntimeError("model 404")
     monkeypatch.setattr(readers, "llm_vision_text", fail)
-    with pytest.raises(UnreadableAttachment, match="vision failed"):
+    with pytest.raises(ScannedDocument) as e:
         read_attachment("scan.pdf", _scanned_pdf())
+    assert e.value.text == ""                                     # no transcript, but still escalated
 
 
-def test_scanned_pdf_empty_vision_result_raises_unreadable(monkeypatch):
-    monkeypatch.setattr(readers, "llm_vision_text", lambda p, pages: "")
-    with pytest.raises(UnreadableAttachment):
-        read_attachment("scan.pdf", _scanned_pdf())
-
-
-def test_budget_error_passes_through_reader(monkeypatch):
+def test_a_scanned_pdf_is_escalated_even_when_the_call_budget_is_used_up(monkeypatch):
     def cap(prompt, pages):
         raise BudgetExceeded("cap")
     monkeypatch.setattr(readers, "llm_vision_text", cap)
-    with pytest.raises(BudgetExceeded):
+    with pytest.raises(ScannedDocument):                          # the decision does not need the transcript
         read_attachment("scan.pdf", _scanned_pdf())
+
+
+class _Inbox:
+    def __init__(self, files):
+        self.files = files
+
+    def read_bytes(self, path):
+        return self.files[path]
+
+
+def test_a_scanned_pair_goes_to_review_and_both_transcripts_are_kept(monkeypatch):
+    monkeypatch.setattr(readers, "llm_vision_text", lambda prompt, pages: "Shipper: ACME LTD")
+    inbox = _Inbox({"si.pdf": _scanned_pdf(), "bl.pdf": _scanned_pdf()})
+    out = analyze_comparison(inbox, {"attachments": ["si.pdf", "bl.pdf"]})
+    assert (out["entry"]["status"], out["entry"]["review_reason"]) == ("NEEDS_REVIEW", "unreadable")
+    assert "Shipper: ACME LTD" in out["si_text"] and "Shipper: ACME LTD" in out["bl_text"]   # the reviewer sees both
+
+
+def test_one_scanned_document_still_shows_the_readable_one(monkeypatch):
+    monkeypatch.setattr(readers, "llm_vision_text", lambda prompt, pages: "")
+    inbox = _Inbox({"si.txt": SI_TEXT.encode(), "bl.pdf": _scanned_pdf()})
+    out = analyze_comparison(inbox, {"attachments": ["si.txt", "bl.pdf"]})
+    assert out["entry"]["review_reason"] == "unreadable"
+    assert "Shipper: ACME TRADING LTD" in out["si_text"] and out["bl_text"] is None
 
 
 # ---------- real sample files (read-only) ----------
@@ -299,9 +325,32 @@ def test_real_txt_pdf_docx_xlsx_files():
 
 
 def test_real_corrupt_pdfs_are_unreadable():
-    for n in ("email_499_BL.pdf", "email_511_BL.pdf", "email_515_BL.pdf"):
+    for n in ("email_511_BL.pdf", "email_515_BL.pdf"):            # garbage after the header: no reader can open them
         with pytest.raises(UnreadableAttachment):
             _read(n)
+
+
+def test_a_damaged_pdf_with_a_broken_index_is_repaired_and_read():
+    text = _read("email_499_BL.pdf")                              # pdfminer refuses it; PDFium repairs it
+    assert text.startswith("BILL OF LADING (DRAFT)")
+    assert extract_fields(text)["gross_weight_kg"] == 41326.0
+    assert extract_fields(_read("email_499_SI.pdf"))["gross_weight_kg"] == 40326.0   # a real difference, now findable
+
+
+@pytest.mark.parametrize("email", ["email_208", "email_351", "email_407"])
+def test_an_overlapping_label_and_value_are_read_in_order(email):
+    si, bl = _read(f"{email}_SI.pdf"), _read(f"{email}_BL.pdf")
+    assert "Notify Party/Intermediate Consignee " in si + bl      # the long label is intact, not shuffled letter by letter
+    party = extract_fields(si)["notify_party"]
+    assert party and party == extract_fields(bl)["notify_party"]  # so both sides now name the same notify party
+
+
+def test_the_real_scanned_sample_pdfs_are_escalated_not_trusted(monkeypatch):
+    monkeypatch.setattr(readers, "llm_vision_text", lambda prompt, pages: "Shipper: ACME LTD")   # no real Gemini call
+    for n in ("email_512", "email_513", "email_514"):
+        for side in ("SI", "BL"):
+            with pytest.raises(ScannedDocument):
+                _read(f"{n}_{side}.pdf")
 
 
 def test_real_blank_si_files_keep_blank_fields_null():

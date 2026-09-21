@@ -1,7 +1,6 @@
 google-genai
-streamlit
-pandas
 pdfplumber
+pypdfium2
 python-docx
 openpyxl
 python-dotenv

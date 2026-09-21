@@ -16,7 +16,6 @@ Data is read from `data/` (`inbox/*.json` + `attachments/`) through the provided
 ```
 python main.py --limit 20 --out output/submission.json     # dev run
 python main.py --workers 8                                  # full run
-streamlit run app/viewer.py                                 # UI (click "Load output/submission.json")
 pytest tests
 ```
 
@@ -40,4 +39,3 @@ Wrong-document detection uses the document title deterministically, and skips ex
 - `has_defect` is `true` only for `MISMATCH`; `NEEDS_REVIEW` entries get `false` (a blank/unreadable value is not a defect). One line to change in `src/report.py`.
 - A `BL_COMPARISON` email with no attachments is `NEEDS_REVIEW / missing_attachment`.
 - Party fields are compared on company name only, not addresses.
-- The viewer's detail panel re-runs extraction for the selected email; results come from the disk cache when the pipeline has already run.

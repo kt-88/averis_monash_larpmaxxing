@@ -6,6 +6,7 @@ from pathlib import Path
 import docx
 import openpyxl
 import pdfplumber
+import pypdfium2
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 
@@ -13,9 +14,17 @@ from src.cache import BudgetExceeded
 from src.llm import llm_vision_text
 
 
-
 class UnreadableAttachment(Exception):
-    """Raised when an attachment yields no usable text (empty, scanned, corrupt, garbled)."""
+    """Raised when an attachment yields no usable text (empty, corrupt, garbled, or a scanned image)."""
+
+
+class ScannedDocument(UnreadableAttachment):
+    """An image-only scan. It is never trusted for an automatic decision, so the email goes to a person.
+    `text` is a vision-model transcript, kept only so the reviewer has something to read (empty if unavailable)."""
+
+    def __init__(self, message: str, text: str = ""):
+        super().__init__(message)
+        self.text = text
 
 
 def _looks_garbled(text: str) -> bool:
@@ -65,7 +74,9 @@ def _pdf_text(pdf) -> str:
     lines = []
     for page in pdf.pages:
         tables = page.find_tables()
-        body = page.filter(_outside([t.bbox for t in tables])).extract_text() or ""
+        # use_text_flow: read the text in the order the PDF draws it. Sorting by position instead shuffles the letters
+        # when a long label and its value overlap on the page ("...Consignee" + "CERIEX" -> "ConsCigEnReIEeX").
+        body = page.filter(_outside([t.bbox for t in tables])).extract_text(use_text_flow=True) or ""
         lines += [l for l in body.splitlines() if l.strip()]
         for t in tables:
             for row in t.extract():
@@ -76,27 +87,55 @@ def _pdf_text(pdf) -> str:
 
 VISION_PROMPT = ("Transcribe this shipping document exactly as 'Label: Value' lines, one per line. "
                  "Do not guess. Write ??? for any text you cannot read.")
+SCAN_NOTE = "[Transcribed from a scanned image by Gemini. Check it against the original.]"
+_ENOUGH_TEXT = 40   # letters and digits; fewer than this means the PDF has no real text layer
+
+
+def _has_text(text: str) -> bool:
+    return len(re.sub(r"\W", "", text)) >= _ENOUGH_TEXT
+
+
+def _pdfium_text(data: bytes) -> str:
+    """Text via PDFium (the engine inside Chrome). It repairs a broken cross-reference index that pdfminer refuses,
+    and still cannot open a file that is genuinely corrupt (that raises, and the file is reported unreadable)."""
+    pdf = pypdfium2.PdfDocument(data)
+    try:
+        return "\n".join(page.get_textpage().get_text_range().replace("\r\n", "\n") for page in pdf)
+    finally:
+        pdf.close()
+
+
+def _page_images(pdf) -> list[bytes]:
+    pages = []
+    for page in pdf.pages[:3]:
+        buf = io.BytesIO()
+        page.to_image(resolution=150).original.save(buf, format="PNG")
+        pages.append(buf.getvalue())
+    return pages
 
 
 def read_pdf(data: bytes) -> str:
-    with pdfplumber.open(io.BytesIO(data)) as pdf:
-        text = _pdf_text(pdf)
-        if len(re.sub(r"\W", "", text)) >= 40:                 # has a real text layer
-            return text
-        pages = []                                             # scanned: render pages to PNG
-        for page in pdf.pages[:3]:
-            buf = io.BytesIO()
-            page.to_image(resolution=150).original.save(buf, format="PNG")
-            pages.append(buf.getvalue())
-    if not pages:
-        raise UnreadableAttachment("PDF has no pages")
+    """Text of a PDF. A damaged file pdfminer refuses is retried with PDFium. An image-only scan is never trusted for
+    an automatic decision: it is transcribed (for the reviewer) and raised as ScannedDocument, so the email is escalated."""
+    pages: list[bytes] = []
     try:
-        return llm_vision_text(VISION_PROMPT, pages)           # a vision model reads the images
-    except BudgetExceeded:
-        raise
-    except Exception as e:
-        raise UnreadableAttachment(f"scanned PDF and vision failed: {e}") from e
-
+        with pdfplumber.open(io.BytesIO(data)) as pdf:
+            text = _pdf_text(pdf)
+            if not _has_text(text):
+                pages = _page_images(pdf)
+    except Exception:
+        text = _pdfium_text(data)                              # raises if the file is truly corrupt
+    if _has_text(text):
+        return text
+    if not pages:
+        raise UnreadableAttachment("PDF has no pages or no readable text")
+    transcript = ""
+    try:
+        transcript = llm_vision_text(VISION_PROMPT, pages).strip()
+    except Exception:                                          # incl. an exhausted budget: the email is escalated anyway
+        pass
+    raise ScannedDocument("scanned image (no text layer): a person must check it",
+                          text=f"{SCAN_NOTE}\n{transcript}" if transcript else "")
 
 
 def read_docx(data: bytes) -> str:

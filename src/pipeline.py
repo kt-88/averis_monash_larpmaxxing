@@ -14,8 +14,11 @@ from src.report import build_entry
 
 
 def load_documents(inbox, paths: list[str]) -> tuple[list[str], bool, bool]:
-    """Read up to two attachments. Returns (texts read so far, any_unreadable, any_file_missing)."""
+    """Read up to two attachments. Returns (texts, any_unreadable, any_file_missing).
+    texts[i] is None for a document that could not be read; for a scanned image it is the vision transcript, kept only
+    so a reviewer can see something (the email is escalated either way)."""
     texts = []
+    unreadable = False
     for p in paths[:2]:
         try:
             texts.append(read_attachment(p, inbox.read_bytes(p)))
@@ -23,9 +26,10 @@ def load_documents(inbox, paths: list[str]) -> tuple[list[str], bool, bool]:
             return texts, False, True
         except BudgetExceeded:
             raise
-        except Exception:  # UnreadableAttachment or any reader bug: escalate this email, don't crash the run
-            return texts, True, False
-    return texts, False, False
+        except Exception as e:  # UnreadableAttachment or any reader bug: escalate this email, don't crash the run
+            unreadable = True
+            texts.append(getattr(e, "text", None) or None)
+    return texts, unreadable, False
 
 
 def analyze_comparison(inbox, email: dict, intent: str | None = None, title: str | None = None,
