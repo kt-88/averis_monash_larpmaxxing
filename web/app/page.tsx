@@ -34,7 +34,7 @@ function Home() {
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
-  const [view, setView] = useState<"inbox" | "spam">("inbox");   // which list the sidebar has open
+  const [view, setView] = useState<"inbox" | "spam" | "summary">("inbox");   // which page the sidebar has open
   const [ready, setReady] = useState(false);      // true once filters were read from the address bar
   const [filtersOpen, setFiltersOpen] = useState(false);   // the category / intent dropdowns are tucked away by default
   const [sideOpen, setSideOpen] = useState(true);        // sidebar expanded, or collapsed to icons
@@ -65,7 +65,7 @@ function Home() {
     setCategory(p.get("category") ?? ""); setIntent(p.get("intent") ?? "");
     setStatus(p.get("status") ?? ""); setQ(p.get("q") ?? "");
     const id = p.get("id"); if (id) setSelected(id);
-    if (p.get("view") === "spam") setView("spam");
+    const v = p.get("view"); if (v === "spam" || v === "summary") setView(v);
     try {
       const m = Number(localStorage.getItem("minutesPerCheck")); if (m > 0) setMinutes(m);
       if (localStorage.getItem("sideOpen") === "0") setSideOpen(false);
@@ -82,7 +82,7 @@ function Home() {
     if (status) p.set("status", status);
     if (q) p.set("q", q);
     if (selected) p.set("id", selected);
-    if (view === "spam") p.set("view", "spam");
+    if (view !== "inbox") p.set("view", view);
     const qs = p.toString();
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
   }, [ready, category, intent, status, q, selected, view]);
@@ -144,7 +144,7 @@ function Home() {
     (!q || `${r.email_id} ${r.title ?? ""} ${r.subject}`.toLowerCase().includes(q.toLowerCase()))), [rows, category, intent, status, q]);
   const inbox = filtered.filter((r) => r.category !== "SPAM");
   const spam = filtered.filter((r) => r.category === "SPAM");
-  const visible = view === "spam" ? spam : inbox;
+  const visible = view === "spam" ? spam : view === "summary" ? [] : inbox;
   const total = (spamView: boolean) => rows.filter((r) => (r.category === "SPAM") === spamView).length;
   const tabCount = (key: string) => (key ? rows.filter((r) => r.status === key).length : rows.length);
 
@@ -200,6 +200,12 @@ function Home() {
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2 3 6v6c0 5 3.8 9.3 9 10 5.2-.7 9-5 9-10V6z" /><path d="M12 8v4M12 16h.01" /></svg>
           <span className="nav-text">Spam</span><span className="count">{total(true)}</span>
         </button>
+        <div className="side-divider" role="presentation" />
+        <div className="side-label sub-label">Overview</div>
+        <button className={`nav-item ${view === "summary" ? "active" : ""}`} aria-current={view === "summary" ? "page" : undefined} title="Summary" onClick={() => setView("summary")}>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
+          <span className="nav-text">Summary</span>
+        </button>
       </nav>
     <main>
       <div className="head">
@@ -221,10 +227,11 @@ function Home() {
         </div>
       )}
 
-      <section className="zone zone-summary" aria-label="Summary">
-        <Summary rows={rows} loaded={loaded} minutes={minutes} onMinutes={changeMinutes} onStartReview={startReview} />
-      </section>
-
+      {view === "summary" ? (
+        <section className="zone zone-summary" aria-label="Summary">
+          <Summary rows={rows} loaded={loaded} minutes={minutes} onMinutes={changeMinutes} onStartReview={startReview} />
+        </section>
+      ) : (
       <section className="zone zone-inbox" aria-label={view === "spam" ? "Spam" : "Inbox"}>
       <div className="tabs" role="group" aria-label="Filter by status">
         {STATUS_TABS.map((t) => (
@@ -281,6 +288,7 @@ function Home() {
         </aside>
       </div>
       </section>
+      )}
 
       <footer className="foot">
         <span>Next.js on Vercel · FastAPI on Render · Postgres on Neon · Gemini reads the messy documents</span>

@@ -12,7 +12,7 @@ export function Summary({ rows, loaded, minutes, onMinutes, onStartReview }: {
   if (!loaded) {
     return (
       <div className="tiles" aria-busy="true">
-        {[0, 1, 2, 3].map((i) => <div className="tile skeleton" key={i} style={{ height: 68 }} />)}
+        {[0, 1, 2].map((i) => <div className="tile skeleton" key={i} style={{ height: 68 }} />)}
       </div>
     );
   }
@@ -34,18 +34,15 @@ export function Summary({ rows, loaded, minutes, onMinutes, onStartReview }: {
         <div className="tile"><b>{rows.length}</b><span>Emails processed</span></div>
         <div className="tile"><b>{comps.length}</b><span>SI vs BL comparisons</span></div>
         <div className="tile bad"><b>{comps.filter((r) => r.status === "MISMATCH").length}</b><span>Mismatches found</span></div>
-        <div className="tile ok">
-          <b>{savedHours.toFixed(1)} h</b>
-          <span>
-            Estimated time saved at{" "}
-            <input
-              className="mini" type="number" min={0} max={60} value={minutes} aria-label="Minutes per manual check"
-              onChange={(e) => onMinutes(Math.max(0, Math.min(60, Number(e.target.value) || 0)))}
-            />{" "}
-            min per manual check
-          </span>
-        </div>
       </div>
+      <p className="muted small saved-line">
+        Estimated time saved: <b>{savedHours.toFixed(1)} h</b> at{" "}
+        <input
+          className="mini" type="number" min={0} max={60} value={minutes} aria-label="Minutes per manual check"
+          onChange={(e) => onMinutes(Math.max(0, Math.min(60, Number(e.target.value) || 0)))}
+        />{" "}
+        min per manual check
+      </p>
 
       <div className="cards">
         <div className="card">

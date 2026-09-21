@@ -126,7 +126,9 @@ button.snip:hover { color: var(--accent); text-decoration: underline; }
 .brand .sub { margin: 0; }
 
 /* ---- summary cards ---- */
-.tile input.mini { width: 44px; padding: 1px 4px; font-size: 12px; text-align: center; }
+.saved-line { margin: 4px 2px 10px; }
+.saved-line b { color: var(--ok); }
+.saved-line input.mini, .tile input.mini { width: 44px; padding: 1px 4px; font-size: 12px; text-align: center; }
 .cards { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; margin-top: 10px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(16,24,40,.04); }
 .card-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -216,7 +218,7 @@ button.nav-item svg { flex: none; opacity: .9; }
 @media (max-width: 900px) {
   .shell { grid-template-columns: minmax(0, 1fr); }
   .side { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 10px 16px; border-right: 0; border-bottom: 1px solid var(--line); }
-  .side-label { display: none; }
+  .side-label, .side-divider { display: none; }
   button.nav-item { width: auto; }
 }
 
@@ -245,6 +247,10 @@ button.nav-item svg { flex: none; opacity: .9; }
 /* ---- collapsible sidebar ---- */
 .side-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .side-head .side-label { padding-bottom: 0; }
+
+.side-divider { height: 1px; background: var(--line); margin: 12px 8px 10px; }
+.side-label.sub-label { padding-bottom: 6px; }
+.shell.collapsed .side-label.sub-label { display: none; }
 button.side-toggle { width: 28px; height: 28px; padding: 0; display: grid; place-items: center; background: transparent; color: var(--muted); border: 1px solid transparent; border-radius: 8px; }
 button.side-toggle:hover:not(:disabled) { filter: none; background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
 .shell { transition: grid-template-columns .18s ease; }
@@ -302,3 +308,5 @@ button.ptab:focus-visible { outline-offset: -2px; }
 .ptab .dot { margin: 0 0 0 7px; }
 button.strip-close { flex: none; align-self: center; margin: 0 0 3px auto; width: 28px; height: 28px; padding: 0; font-size: 20px; line-height: 1; background: transparent; color: var(--muted); border: 1px solid transparent; border-radius: 8px; }
 button.strip-close:hover:not(:disabled) { filter: none; background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--text); }
+
+@media (max-width: 900px) { .side-divider, .side-label.sub-label { display: none; } }
