@@ -25,9 +25,9 @@ The hackathon brief is the source of truth for scope. Only document-comparison e
 | Backend API (FastAPI) | Done, deployed |
 | Database (Postgres) | Done, deployed |
 | Web frontend (Next.js) | Done, deployed |
-| Emails processed | 514 of 520 (email_515 to email_520 need Gemini quota) |
-| Results | 451 OK, 47 MISMATCH, 16 NEEDS_REVIEW |
-| Scored against the hackathon server | Not yet |
+| Emails processed | 520 of 520 |
+| Results | 454 OK, 47 MISMATCH, 19 NEEDS_REVIEW |
+| Scored against the hackathon server | Yes — final score 0.930 (see `docs/SELF_EVAL_LOG.md`) |
 | README written for judges | Not yet |
 
 ## 3. How the pieces fit together
@@ -176,8 +176,6 @@ cd web && npm run dev                        # frontend on :3000
 - The 6 unprocessed emails (email_515 to email_520) need Gemini quota. Then run `python main.py --workers 4` and `python -m api.seed --details`.
 - Low-confidence extractions are not yet routed to human review. Failed emails are skipped rather than shown as failures in the report.
 - The remaining 47 mismatches were only partly spot-checked. The ones reviewed looked like genuine differences (ports, container counts, weights), but not all were checked.
-- One test fails: `test_real_corrupt_pdfs_are_unreadable`. It predates the database and frontend work and appears related to the reader's vision fallback. Not yet investigated.
-- Not yet scored against the hackathon self-evaluation server.
 - `README.md` describes the pipeline but not the API, database or web app. It should be updated before submission, with the live link and design notes.
 - `__pycache__` folders are tracked in git and show up as modified after every run. Untrack them.
 - `app/viewer.py` (Streamlit) is superseded by `web/` and can be deleted once nobody needs it.
