@@ -18,7 +18,20 @@ export const FIELD_LABELS: Record<string, string> = {
 export const CATEGORIES = ["BL_COMPARISON", "SI_REQUEST", "INVOICE_QUERY", "GENERAL", "SPAM"];
 export const STATUSES = ["OK", "MISMATCH", "NEEDS_REVIEW"];
 
-export type HumanDecision = { status: string; defect_fields: string[]; note: string };
+export type HumanDecision = {
+  status: string; defect_fields: string[]; note: string;
+  reason?: string | null; accepted_blanks?: string[];
+};
+
+// Why a reviewer decided as they did. Only blank_acceptable teaches the system anything.
+export const DECISION_REASONS: Record<string, string> = {
+  blank_acceptable: "Blank on the SI is fine - the BL has it",
+  system_wrong: "The system misjudged this",
+  genuine_issue: "The flagged problem is real",
+  other: "Other",
+};
+
+export type Rules = { min_votes: number; votes: Record<string, number>; blank_acceptable: string[] };
 
 export type EmailRow = {
   email_id: string;
@@ -31,6 +44,7 @@ export type EmailRow = {
   defect_fields: string[];
   has_defect: boolean;
   human_decision: HumanDecision | null;
+  learned_rule?: string[];   // fields a learned reviewer rule excused, so no person was needed
 };
 
 // What the extractor knows about one field: the value as written, the comparable value, how sure it is
@@ -52,6 +66,7 @@ export type EmailDetail = EmailRow & {
     bl_detail?: Record<string, FieldDetail> | null;
     si_text: string | null;
     bl_text: string | null;
+    learned_exceptions?: string[];
   } | null;
   detail_error?: string;
 };
@@ -83,7 +98,9 @@ export const getEmail = (id: string) => request<EmailDetail>(`/emails/${id}`);
 export const getRun = () => request<RunStatus>("/runs/current");
 export const startRun = () => request<{ queued: number }>("/runs?only_missing=true", { method: "POST" });
 export const retryEmail = (id: string) => request<{ queued: number }>(`/emails/${id}/retry`, { method: "POST" });
-export const submitReview = (id: string, body: HumanDecision) =>
+export const getRules = () => request<Rules>("/rules");
+export const applyRules = () => request<{ queued: number }>("/rules/apply", { method: "POST" });
+export const submitReview =(id: string, body: HumanDecision) =>
   request<EmailRow>(`/emails/${id}/review`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

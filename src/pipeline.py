@@ -7,7 +7,7 @@ from src import cache
 from src.cache import BudgetExceeded
 from src.classifier import classify_email
 from src.comparator import compare_fields
-from src.escalation import check_attachments, check_doc_types, check_missing_values
+from src.escalation import check_attachments, check_doc_types, check_missing_values, excusable_blanks
 from src.extractor import extract_fields_detailed, flat_values
 from src.readers import read_attachment
 from src.report import build_entry
@@ -28,11 +28,13 @@ def load_documents(inbox, paths: list[str]) -> tuple[list[str], bool, bool]:
     return texts, False, False
 
 
-def analyze_comparison(inbox, email: dict, intent: str | None = None, title: str | None = None) -> dict:
-    """Run stages 2-4 for one BL_COMPARISON email; returns entry plus readable source data."""
+def analyze_comparison(inbox, email: dict, intent: str | None = None, title: str | None = None,
+                       learned=()) -> dict:
+    """Run stages 2-4 for one BL_COMPARISON email; returns entry plus readable source data.
+    `learned`: fields reviewers have repeatedly accepted as blank on the SI (see src/learning.py)."""
     paths = email.get("attachments", [])
     detail = {"si_fields": None, "bl_fields": None, "si_text": None, "bl_text": None,
-              "si_detail": None, "bl_detail": None}
+              "si_detail": None, "bl_detail": None, "learned_exceptions": []}
 
     def review(reason):
         return {**detail, "entry": build_entry("BL_COMPARISON", "NEEDS_REVIEW", reason, intent=intent, title=title)}
@@ -51,17 +53,19 @@ def analyze_comparison(inbox, email: dict, intent: str | None = None, title: str
     detail["si_detail"] = extract_fields_detailed(texts[0])
     detail["bl_detail"] = extract_fields_detailed(texts[1])
     detail["si_fields"], detail["bl_fields"] = flat_values(detail["si_detail"]), flat_values(detail["bl_detail"])
-    if (reason := check_missing_values(detail["si_fields"], detail["bl_fields"])):
+    excused = excusable_blanks(detail["si_fields"], detail["bl_fields"], learned)
+    detail["learned_exceptions"] = excused
+    if (reason := check_missing_values(detail["si_fields"], detail["bl_fields"], learned)):
         return review(reason)
-    status, defects = compare_fields(detail["si_fields"], detail["bl_fields"])
+    status, defects = compare_fields(detail["si_fields"], detail["bl_fields"], skip=excused)
     return {**detail, "entry": build_entry("BL_COMPARISON", status, None, defects, intent, title)}
 
 
-def process_email(inbox, email: dict) -> dict:
+def process_email(inbox, email: dict, learned=()) -> dict:
     category, intent, title = classify_email(email)
     if category != "BL_COMPARISON":
         return {"entry": build_entry(category, intent=intent, title=title)}
-    return analyze_comparison(inbox, email, intent, title)
+    return analyze_comparison(inbox, email, intent, title, learned)
 
 
 def run_pipeline(inbox, limit: int | None = None, workers: int = 4) -> dict:

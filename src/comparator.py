@@ -52,7 +52,8 @@ def field_matches(field: str, a, b) -> bool:
     return names_match(a, b)
 
 
-def compare_fields(si: dict, bl: dict) -> tuple[str, list[str]]:
-    """Return (status, defect_fields). Callers must have ruled out missing values first."""
-    diffs = [f for f in FIELDS if not field_matches(f, si.get(f), bl.get(f))]
+def compare_fields(si: dict, bl: dict, skip=()) -> tuple[str, list[str]]:
+    """Return (status, defect_fields). Callers must have ruled out missing values first.
+    Fields in `skip` (blanks a reviewer rule excused) are left out of the comparison."""
+    diffs = [f for f in FIELDS if f not in skip and not field_matches(f, si.get(f), bl.get(f))]
     return ("MISMATCH", diffs) if diffs else ("OK", [])

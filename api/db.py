@@ -6,6 +6,8 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import sqlalchemy as sa
 
+from src import learning
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -42,6 +44,8 @@ results = sa.Table(
     sa.Column("entry", sa.JSON, nullable=False),
     sa.Column("detail", sa.JSON, nullable=True),
     sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+    # Fields a learned reviewer rule excused for this email (kept out of `detail` so the list stays light).
+    sa.Column("learned_fields", sa.JSON, nullable=True),
 )
 
 # Human confirm/correct decisions, kept apart from the automatic result so neither overwrites the other.
@@ -52,11 +56,26 @@ decisions = sa.Table(
     sa.Column("defect_fields", sa.JSON, nullable=False),
     sa.Column("note", sa.Text, nullable=False, default=""),
     sa.Column("decided_at", sa.DateTime(timezone=True), nullable=False),
+    # Why the reviewer decided this, and (for blank_acceptable) which blank SI fields they accepted.
+    sa.Column("reason", sa.String(32), nullable=True),
+    sa.Column("accepted_blanks", sa.JSON, nullable=True),
 )
+
+# Columns added after the first deploy: create_all() never alters an existing table, so add them here.
+_ADDED_COLUMNS = {
+    "decisions": {"reason": "VARCHAR(32)", "accepted_blanks": "JSON"},
+    "results": {"learned_fields": "JSON"},
+}
 
 
 def init_db() -> None:
     meta.create_all(engine)
+    with engine.begin() as conn:
+        for table, columns in _ADDED_COLUMNS.items():
+            have = {c["name"] for c in sa.inspect(conn).get_columns(table)}
+            for name, ddl in columns.items():
+                if name not in have:
+                    conn.execute(sa.text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
 
 
 def _now() -> datetime:
@@ -78,12 +97,21 @@ def save_result(email_id: str, entry: dict, detail: dict | None = None, keep_det
         values = {"email_id": email_id, "entry": entry, "updated_at": _now()}
         if detail is not None or not keep_detail:
             values["detail"] = detail
+            values["learned_fields"] = (detail or {}).get("learned_exceptions") or []
         _upsert(conn, results, "email_id", values)
 
 
 def save_detail(email_id: str, detail: dict) -> None:
     with engine.begin() as conn:
-        conn.execute(results.update().where(results.c.email_id == email_id).values(detail=detail))
+        conn.execute(results.update().where(results.c.email_id == email_id)
+                     .values(detail=detail, learned_fields=detail.get("learned_exceptions") or []))
+
+
+def all_learned() -> dict[str, list[str]]:
+    """{email_id: fields} for emails a learned reviewer rule helped resolve."""
+    with engine.connect() as conn:
+        rows = conn.execute(sa.select(results.c.email_id, results.c.learned_fields))
+        return {r.email_id: r.learned_fields for r in rows if r.learned_fields}
 
 
 def get_result(email_id: str) -> dict | None:
@@ -103,15 +131,23 @@ def count_results() -> int:
         return conn.execute(sa.select(sa.func.count()).select_from(results)).scalar_one()
 
 
-def save_decision(email_id: str, status: str, defect_fields: list[str], note: str) -> None:
+def save_decision(email_id: str, status: str, defect_fields: list[str], note: str,
+                  reason: str | None = None, accepted_blanks: list[str] | None = None) -> None:
     with engine.begin() as conn:
         _upsert(conn, decisions, "email_id", {
             "email_id": email_id, "status": status, "defect_fields": defect_fields,
-            "note": note, "decided_at": _now(),
+            "note": note, "decided_at": _now(), "reason": reason,
+            "accepted_blanks": accepted_blanks or [],
         })
 
 
 def all_decisions() -> dict[str, dict]:
     with engine.connect() as conn:
-        return {r.email_id: {"status": r.status, "defect_fields": r.defect_fields, "note": r.note}
+        return {r.email_id: {"status": r.status, "defect_fields": r.defect_fields, "note": r.note,
+                             "reason": r.reason, "accepted_blanks": r.accepted_blanks or []}
                 for r in conn.execute(sa.select(decisions))}
+
+
+def learned_blanks() -> set[str]:
+    """Fields whose blank SI value reviewers have accepted often enough to stop escalating."""
+    return learning.learned_blank_fields(all_decisions())

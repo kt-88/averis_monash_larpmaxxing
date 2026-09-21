@@ -20,7 +20,8 @@ The hackathon brief is the source of truth for scope. Only document-comparison e
 | Classification (categories, intents, titles) | Done |
 | Extraction (txt, pdf, docx, xlsx, scanned PDFs via vision fallback) | Done |
 | Comparison | Done, with a fix for the `/INTERMEDIATE CONSIGNEE:` label (see section 8) |
-| Human review (web form, saved decisions) | Done for confirm/correct. Low-confidence extractions are not yet sent to review |
+| Human review (web form, saved decisions) | Done for confirm/correct, with a reason for each decision (section 9b) |
+| Learning from review | Done for one case: blank SI values that reviewers repeatedly accept (section 9b) |
 | Backend API (FastAPI) | Done, deployed |
 | Database (Postgres) | Done, deployed |
 | Web frontend (Next.js) | Done, deployed |
@@ -131,7 +132,9 @@ The five categories match the hackathon scoring format, so do not rename them. I
 | `GET /health` | Is the service up, and how many emails are stored |
 | `GET /emails` | List emails; filters: `category`, `intent`, `status`, `q` |
 | `GET /emails/{id}` | One email with its extracted fields and source text |
-| `POST /emails/{id}/review` | Save a human decision (`OK` or `MISMATCH`, fields, note) |
+| `POST /emails/{id}/review` | Save a human decision (`OK` or `MISMATCH`, fields, note, reason, accepted blanks) |
+| `GET /rules` | What reviewers have taught the system (votes per field, rules in force) |
+| `POST /rules/apply` | Reprocess emails waiting on a missing-value review so learned rules take effect |
 | `POST /runs` | Process emails in the background (only new ones by default) |
 | `GET /runs/current` | Progress and failures of the current run |
 | `POST /emails/{id}/retry` | Reprocess one email |
@@ -178,6 +181,17 @@ cd web && npm run dev                        # frontend on :3000
 - `README.md` describes the pipeline but not the API, database or web app. It should be updated before submission, with the live link and design notes.
 - `__pycache__` folders are tracked in git and show up as modified after every run. Untrack them.
 - `app/viewer.py` (Streamlit) is superseded by `web/` and can be deleted once nobody needs it.
+
+## 9b. Learning from human review
+
+When the system asks for a review, the reviewer picks a reason. One reason teaches the system: **"Blank on the SI is fine - the BL has it"**, with the blank fields ticked.
+
+- A field becomes a **learned rule** after 2 decisions accept it (`MIN_VOTES` in `src/learning.py`). Rules are worked out from the `decisions` table, so they survive restarts and are undone if decisions change.
+- A rule only excuses a field that is **blank on the SI and filled in on the BL**. A blank BL, or a blank on both sides, always goes to a person. Missing attachments, unreadable files and wrong document types never learn anything.
+- A vote is only accepted for fields that really are blank on that email (checked against its stored details).
+- When a rule is learned, the emails still waiting on a `missing_value` review are reprocessed in the background, keeping their stored category, intent and title (no new classification call). Emails resolved this way show a **learned rule** tag.
+- **Learned rules and human decisions only exist in the API and website.** `main.py` and `output/submission.json` do not apply them, so the scored output is unchanged.
+- The API has no login, so anyone who can reach it can post decisions. Add authentication before relying on learned rules for anything important.
 
 ## 10. Working rules
 

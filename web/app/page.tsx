@@ -1,7 +1,10 @@
 "use client";
 //for displaying content in vercel
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { API, CATEGORIES, EmailRow, STATUSES, getEmails, getHealth } from "@/lib/api";
+import {
+  CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent,
+  useCallback, useEffect, useMemo, useRef, useState,
+} from "react";
+import { API, CATEGORIES, EmailRow, getEmails, getHealth } from "@/lib/api";
 import { Detail } from "@/components/Detail";
 import { EmailTable } from "@/components/EmailTable";
 import { RunControl } from "@/components/RunControl";
@@ -16,6 +19,10 @@ const STATUS_TABS: { key: string; label: string }[] = [
   { key: "OK", label: "OK" },
 ];
 
+const DEFAULT_SHARE = 5 / 12;   // list : details = 5 : 7 until the user drags the divider
+const MIN_SHARE = 0.2, MAX_SHARE = 0.8;
+const clampShare = (v: number) => Math.min(MAX_SHARE, Math.max(MIN_SHARE, v));
+
 function Home() {
   const toast = useToast();
   const [rows, setRows] = useState<EmailRow[]>([]);
@@ -27,7 +34,12 @@ function Home() {
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const [view, setView] = useState<"inbox" | "spam">("inbox");   // which list the sidebar has open
   const [ready, setReady] = useState(false);      // true once filters were read from the address bar
+  const [filtersOpen, setFiltersOpen] = useState(false);   // the category / intent dropdowns are tucked away by default
+  const [sideOpen, setSideOpen] = useState(true);        // sidebar expanded, or collapsed to icons
+  const [listShare, setListShare] = useState(DEFAULT_SHARE); // share of the width the email list takes
+  const layoutRef = useRef<HTMLDivElement>(null);
   const [minutes, setMinutes] = useState(3);      // assumption behind "time saved": minutes per manual check
   const panelRef = useRef<HTMLElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -53,7 +65,13 @@ function Home() {
     setCategory(p.get("category") ?? ""); setIntent(p.get("intent") ?? "");
     setStatus(p.get("status") ?? ""); setQ(p.get("q") ?? "");
     const id = p.get("id"); if (id) setSelected(id);
-    try { const m = Number(localStorage.getItem("minutesPerCheck")); if (m > 0) setMinutes(m); } catch { /* storage blocked */ }
+    if (p.get("view") === "spam") setView("spam");
+    try {
+      const m = Number(localStorage.getItem("minutesPerCheck")); if (m > 0) setMinutes(m);
+      if (localStorage.getItem("sideOpen") === "0") setSideOpen(false);
+      if (localStorage.getItem("filtersOpen") === "1") setFiltersOpen(true);
+      const w = Number(localStorage.getItem("listShare")); if (w >= MIN_SHARE && w <= MAX_SHARE) setListShare(w);
+    } catch { /* storage blocked */ }
     setReady(true);
   }, []);
   useEffect(() => {
@@ -64,9 +82,48 @@ function Home() {
     if (status) p.set("status", status);
     if (q) p.set("q", q);
     if (selected) p.set("id", selected);
+    if (view === "spam") p.set("view", "spam");
     const qs = p.toString();
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-  }, [ready, category, intent, status, q, selected]);
+  }, [ready, category, intent, status, q, selected, view]);
+
+  const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* storage blocked */ } };
+  const toggleSide = () => setSideOpen((open) => { remember("sideOpen", open ? "0" : "1"); return !open; });
+  const toggleFilters = () => setFiltersOpen((open) => { remember("filtersOpen", open ? "0" : "1"); return !open; });
+  const activeFilters = (category ? 1 : 0) + (intent ? 1 : 0);   // status is already shown by the tabs above
+  const commitShare = (v: number) => { setListShare(v); remember("listShare", String(v)); };
+
+  // Drag the divider between the list and the details. The CSS variable is set directly while dragging (no
+  // re-render of 500 rows per pixel) and saved once when the pointer is released.
+  const startDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const box = layoutRef.current;
+    if (!box) return;
+    e.preventDefault();
+    const handle = e.currentTarget;
+    handle.setPointerCapture(e.pointerId);
+    const rect = box.getBoundingClientRect();
+    let share = listShare;
+    box.classList.add("dragging");
+    const move = (ev: PointerEvent) => {
+      share = clampShare((ev.clientX - rect.left - 7) / (rect.width - 14));   // 7 = half the divider's width
+      box.style.setProperty("--list-share", String(share));
+    };
+    const up = () => {
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", up);
+      handle.removeEventListener("pointercancel", up);
+      box.classList.remove("dragging");
+      commitShare(share);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", up);
+    handle.addEventListener("pointercancel", up);
+  };
+  const onDividerKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "ArrowLeft") { e.preventDefault(); commitShare(clampShare(listShare - 0.02)); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); commitShare(clampShare(listShare + 0.02)); }
+    else if (e.key === "Home") { e.preventDefault(); commitShare(DEFAULT_SHARE); }
+  };
 
   const changeMinutes = (m: number) => {
     setMinutes(m);
@@ -87,6 +144,8 @@ function Home() {
     (!q || `${r.email_id} ${r.title ?? ""} ${r.subject}`.toLowerCase().includes(q.toLowerCase()))), [rows, category, intent, status, q]);
   const inbox = filtered.filter((r) => r.category !== "SPAM");
   const spam = filtered.filter((r) => r.category === "SPAM");
+  const visible = view === "spam" ? spam : inbox;
+  const total = (spamView: boolean) => rows.filter((r) => (r.category === "SPAM") === spamView).length;
   const tabCount = (key: string) => (key ? rows.filter((r) => r.status === key).length : rows.length);
 
   // The review queue: comparisons the system would not decide alone and nobody has decided yet.
@@ -94,7 +153,7 @@ function Home() {
     () => rows.filter((r) => r.category === "BL_COMPARISON" && r.review_reason && !r.human_decision), [rows]);
 
   const startReview = () => {
-    setCategory(""); setIntent(""); setQ(""); setStatus("NEEDS_REVIEW");
+    setCategory(""); setIntent(""); setQ(""); setStatus("NEEDS_REVIEW"); setView("inbox");
     if (pending[0]) pick(pending[0].email_id);
   };
   const goNext = useCallback(() => {
@@ -112,16 +171,36 @@ function Home() {
       if (e.key === "/") { e.preventDefault(); searchRef.current?.focus(); }
       else if (e.key === "Escape") setSelected(null);
       else if (e.key === "j" || e.key === "k") {
-        const i = inbox.findIndex((r) => r.email_id === selected);
-        const next = inbox[e.key === "j" ? Math.min(i + 1, inbox.length - 1) : Math.max(i - 1, 0)];
+        const i = visible.findIndex((r) => r.email_id === selected);
+        const next = visible[e.key === "j" ? Math.min(i + 1, visible.length - 1) : Math.max(i - 1, 0)];
         if (next) pick(next.email_id);
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [inbox, selected, pick]);
+  }, [visible, selected, pick]);
 
   return (
+    <div className={`shell ${sideOpen ? "" : "collapsed"}`}>
+      <nav className="side" aria-label="Mailbox views">
+        <div className="side-head">
+          <div className="side-label">Mailbox</div>
+          <button className="side-toggle" aria-expanded={sideOpen} aria-label={sideOpen ? "Collapse sidebar" : "Expand sidebar"}
+            title={sideOpen ? "Collapse sidebar" : "Expand sidebar"} onClick={toggleSide}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              {sideOpen ? <path d="m15 6-6 6 6 6" /> : <path d="m9 6 6 6-6 6" />}
+            </svg>
+          </button>
+        </div>
+        <button className={`nav-item ${view === "inbox" ? "active" : ""}`} aria-current={view === "inbox" ? "page" : undefined} title="Inbox" onClick={() => setView("inbox")}>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z" /></svg>
+          <span className="nav-text">Inbox</span><span className="count">{total(false)}</span>
+        </button>
+        <button className={`nav-item ${view === "spam" ? "active" : ""}`} aria-current={view === "spam" ? "page" : undefined} title="Spam" onClick={() => setView("spam")}>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2 3 6v6c0 5 3.8 9.3 9 10 5.2-.7 9-5 9-10V6z" /><path d="M12 8v4M12 16h.01" /></svg>
+          <span className="nav-text">Spam</span><span className="count">{total(true)}</span>
+        </button>
+      </nav>
     <main>
       <div className="head">
         <div className="brand">
@@ -142,8 +221,11 @@ function Home() {
         </div>
       )}
 
-      <Summary rows={rows} loaded={loaded} minutes={minutes} onMinutes={changeMinutes} onStartReview={startReview} />
+      <section className="zone zone-summary" aria-label="Summary">
+        <Summary rows={rows} loaded={loaded} minutes={minutes} onMinutes={changeMinutes} onStartReview={startReview} />
+      </section>
 
+      <section className="zone zone-inbox" aria-label={view === "spam" ? "Spam" : "Inbox"}>
       <div className="tabs" role="group" aria-label="Filter by status">
         {STATUS_TABS.map((t) => (
           <button key={t.label} className={`tab ${status === t.key ? "active" : ""}`} aria-pressed={status === t.key} onClick={() => setStatus(t.key)}>
@@ -153,15 +235,12 @@ function Home() {
       </div>
 
       <div className="filters">
-        <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">
-          <option value="">All categories</option>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <select value={intent} onChange={(e) => setIntent(e.target.value)} aria-label="Intent">
-          <option value="">All intents</option>{intents.map((i) => <option key={i}>{i}</option>)}
-        </select>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
-          <option value="">All statuses</option>{STATUSES.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
-        </select>
+        <button className={`secondary filter-toggle ${filtersOpen ? "open" : ""}`} aria-expanded={filtersOpen} aria-controls="filter-panel" onClick={toggleFilters}>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z" /></svg>
+          Filters
+          {activeFilters > 0 && <span className="badge" aria-label={`${activeFilters} active`}>{activeFilters}</span>}
+          <svg className="chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        </button>
         <input ref={searchRef} type="text" placeholder="Search title / id  ( / )" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search" />
         <button className="secondary" onClick={refresh}>Refresh</button>
         <button className="secondary" disabled={!rows.length}
@@ -170,19 +249,30 @@ function Home() {
         </button>
         <RunControl onDone={refresh} />
       </div>
+      {filtersOpen && (
+        <div id="filter-panel" className="filter-panel">
+          <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">
+            <option value="">All categories</option>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          </select>
+          <select value={intent} onChange={(e) => setIntent(e.target.value)} aria-label="Intent">
+            <option value="">All intents</option>{intents.map((i) => <option key={i}>{i}</option>)}
+          </select>
+          <button className="secondary" disabled={!activeFilters} onClick={() => { setCategory(""); setIntent(""); }}>Clear filters</button>
+        </div>
+      )}
       <p className="hint">Shortcuts: <kbd>/</kbd> search · <kbd>j</kbd> <kbd>k</kbd> next / previous email · <kbd>Esc</kbd> close</p>
 
-      <div className="layout">
+      <div className="layout" ref={layoutRef} style={{ "--list-share": listShare } as CSSProperties}>
         <div className="list-col">
-          <h2>Inbox ({inbox.length})</h2>
-          <EmailTable rows={inbox} selected={selected} onPick={pick} maxHeight="68vh" loading={!loaded && online}
+          <h2>{view === "spam" ? "Spam" : "Inbox"} ({visible.length})</h2>
+          <EmailTable rows={visible} selected={selected} onPick={pick} maxHeight="68vh" loading={!loaded && online}
             empty={loaded ? "No emails match the filters." : "Loading..."} />
-
-          <details className="spam">
-            <summary>Spam ({spam.length})</summary>
-            <EmailTable rows={spam} selected={selected} onPick={pick} maxHeight="30vh" empty="No spam matches the filters." />
-          </details>
         </div>
+
+        <div className="divider" role="separator" aria-orientation="vertical" aria-label="Resize the list and the details"
+          aria-valuemin={Math.round(MIN_SHARE * 100)} aria-valuemax={Math.round(MAX_SHARE * 100)} aria-valuenow={Math.round(listShare * 100)}
+          tabIndex={0} title="Drag to resize, double-click to reset" onPointerDown={startDrag} onKeyDown={onDividerKey}
+          onDoubleClick={() => commitShare(DEFAULT_SHARE)} />
 
         <aside className="detail-col" ref={panelRef}>
           {selected
@@ -190,12 +280,14 @@ function Home() {
             : <div className="panel placeholder"><b>Pick an email</b><br />Its SI and BL fields and the source lines they were read from will appear here.</div>}
         </aside>
       </div>
+      </section>
 
       <footer className="foot">
         <span>Next.js on Vercel · FastAPI on Render · Postgres on Neon · Gemini reads the messy documents</span>
         <a href={`${API}/docs`} target="_blank" rel="noreferrer">API docs</a>
       </footer>
     </main>
+    </div>
   );
 }
 

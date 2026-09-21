@@ -6,6 +6,7 @@ python-docx
 openpyxl
 python-dotenv
 pytest
+httpx
 fastapi
 uvicorn
 
