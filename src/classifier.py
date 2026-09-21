@@ -1,4 +1,4 @@
-"""Stage 1: classify an email into one of five categories."""
+"""Stage 1: classify an email into one of 5 categories."""
 import json
 import os
 import re
