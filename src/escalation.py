@@ -1,4 +1,4 @@
-"""Stage 4: decide whether a comparison must go to a human, and why."""
+"""Stage 4: decide whether a comparison must go to a human, and if so, why."""
 from src.extractor import BLANK, FIELDS
 
 OTHER_DOC_MARKERS = ["COMMERCIAL INVOICE", "PACKING LIST", "CERTIFICATE", "INVOICE"]
