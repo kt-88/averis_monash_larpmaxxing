@@ -16,7 +16,6 @@ export const FIELD_LABELS: Record<string, string> = {
 };
 
 export const CATEGORIES = ["BL_COMPARISON", "SI_REQUEST", "INVOICE_QUERY", "GENERAL", "SPAM"];
-export const STATUSES = ["OK", "MISMATCH", "NEEDS_REVIEW"];
 
 export type HumanDecision = {
   status: string; defect_fields: string[]; note: string;
@@ -31,7 +30,6 @@ export const DECISION_REASONS: Record<string, string> = {
   other: "Other",
 };
 
-export type Rules = { min_votes: number; votes: Record<string, number>; blank_acceptable: string[] };
 
 export type EmailRow = {
   email_id: string;
@@ -100,8 +98,6 @@ export const getEmail = (id: string) => request<EmailDetail>(`/emails/${id}`);
 export const getRun = () => request<RunStatus>("/runs/current");
 export const startRun = () => request<{ queued: number }>("/runs?only_missing=true", { method: "POST" });
 export const retryEmail = (id: string) => request<{ queued: number }>(`/emails/${id}/retry`, { method: "POST" });
-export const getRules = () => request<Rules>("/rules");
-export const applyRules = () => request<{ queued: number }>("/rules/apply", { method: "POST" });
 export const submitReview =(id: string, body: HumanDecision) =>
   request<EmailRow>(`/emails/${id}/review`, {
     method: "POST",
