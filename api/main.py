@@ -57,6 +57,13 @@ def merged(email_id: str, entry: dict, decisions: dict, learned: dict | None = N
     return out
 
 
+@app.get("/")
+def root():
+    """A signpost, so the bare address does not answer "Not Found" to anyone who opens it in a browser."""
+    return {"service": "Shipping document verification API", "ok": True,
+            "docs": "/docs", "health": "/health", "emails": "/emails"}
+
+
 @app.get("/health")
 def health():
     return {"ok": True, "emails_processed": db.count_results()}

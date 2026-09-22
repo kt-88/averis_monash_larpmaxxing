@@ -2,8 +2,8 @@
 
 Reads a shipping team's inbox, finds the emails asking for a document check, and compares the Shipping Instruction (SI) against the draft Bill of Lading (BL) before the draft is finalised.
 
-- **Live app:** [add the Vercel URL]
-- **API:** [add the Render URL] (`/health`, `/docs`)
+- **Live app:** https://shipping-checker-pi.vercel.app/
+- **API:** https://shipping-checker-api.onrender.com/docs
 
 The first load can take up to a minute while the free-tier backend wakes up.
 
